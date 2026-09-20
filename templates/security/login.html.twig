@@ -1,0 +1,43 @@
+{% extends 'front/base.html.twig' %}
+
+{% block title %}{{ 'security.login_title'|trans }}{% endblock %}
+
+{% block body %}
+    <form method="post">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }}">{{ message|trans }}</div>
+            {% endfor %}
+        {% endfor %}
+
+        {% if error %}
+            <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+        {% endif %}
+
+        {% if app.user %}
+            <div class="mb-3">
+                {{ 'common.logged_in_as'|trans }} {{ app.user.userIdentifier }}, <a href="{{ logout_path() }}">{{ 'common.logout'|trans }}</a>
+            </div>
+        {% endif %}
+
+        <h1 class="h3 mb-3 font-weight-normal">{{ 'security.sign_in_heading'|trans }}</h1>
+        <label for="username">{{ 'security.email_label'|trans }}</label>
+        <input type="email" value="{{ last_username }}" name="_username" id="username" class="form-control" autocomplete="email" required autofocus>
+        <label class="mt-2" for="password">{{ 'security.password_label'|trans }}</label>
+        <input type="password" name="_password" id="password" class="form-control" autocomplete="current-password" required>
+        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
+
+        <div class="form-check mt-2 mb-3">
+            <input type="checkbox" name="_remember_me" id="_remember_me" class="form-check-input">
+            <label class="form-check-label" for="_remember_me">{{ 'security.remember_me_label'|trans }}</label>
+        </div>
+
+        <button class="btn btn-lg btn-success mt-2" type="submit">
+            {{ 'security.sign_in'|trans }}
+        </button>
+
+        <p class="mt-3">
+            <a href="{{ path('app_register') }}">{{ 'security.no_account'|trans }}</a>
+        </p>
+    </form>
+{% endblock %}

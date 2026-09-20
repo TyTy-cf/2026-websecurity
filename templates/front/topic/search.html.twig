@@ -1,0 +1,26 @@
+{% extends 'front/base.html.twig' %}
+
+{% block title %}{{ 'search.title'|trans }}{% endblock %}
+
+{% block body %}
+    <h1 class="my-4">{{ 'search.results_for'|trans({'%query%': query}) }}</h1>
+
+    {% for topic in topics %}
+        <div class="card mb-3 col-6 mx-auto">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="{{ path('app_topic_show', { id: topic.id }) }}">{{ topic.title }}</a>
+                </h5>
+                <h6 class="card-subtitle mb-2 text-muted">
+                    {{ topic.category.name }} &middot; {{ 'common.posted_by'|trans({'%author%': topic.author.nickname, '%date%': topic.createdAt|date('d/m/Y')}) }}
+                </h6>
+                <p class="card-text">
+                    {{ topic.content|slice(0, 200) }}{% if topic.content|length > 200 %}&hellip;{% endif %}
+                </p>
+                <a href="{{ path('app_topic_show', { id: topic.id }) }}" class="btn btn-sm btn-outline-primary">{{ 'common.view_topic'|trans }}</a>
+            </div>
+        </div>
+    {% else %}
+        <p>{{ 'search.no_results'|trans }}</p>
+    {% endfor %}
+{% endblock %}

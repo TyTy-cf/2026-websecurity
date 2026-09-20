@@ -1,0 +1,37 @@
+{% extends 'front/base.html.twig' %}
+
+{% block title %}{{ category.name }} - Reddit-Ish{% endblock %}
+
+{% block body %}
+    <div id="ref-banner" class="col-6 mx-auto"></div>
+
+    <h1 class="my-4">{{ category.name }}</h1>
+
+    {% if app.user %}
+        <div class="col-6 mx-auto mb-4">
+            <label for="share-link" class="form-label">{{ 'category.share_label'|trans }}</label>
+            <input id="share-link" type="text" class="form-control" readonly
+                   value="{{ url('app_category_show', { id: category.id }) }}#ref={{ app.user.nickname }}"
+                   onclick="this.select()">
+        </div>
+    {% endif %}
+
+    {% for topic in topics %}
+        <div class="card mb-3 col-6 mx-auto">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="{{ path('app_topic_show', { id: topic.id }) }}">{{ topic.title }}</a>
+                </h5>
+                <h6 class="card-subtitle mb-2 text-muted">
+                    {{ 'common.posted_by'|trans({'%author%': topic.author.nickname, '%date%': topic.createdAt|date('d/m/Y')}) }}
+                </h6>
+                <p class="card-text">
+                    {{ topic.content|slice(0, 200) }}{% if topic.content|length > 200 %}&hellip;{% endif %}
+                </p>
+                <a href="{{ path('app_topic_show', { id: topic.id }) }}" class="btn btn-sm btn-outline-primary">{{ 'common.view_topic'|trans }}</a>
+            </div>
+        </div>
+    {% else %}
+        <p>{{ 'category.no_topics'|trans }}</p>
+    {% endfor %}
+{% endblock %}

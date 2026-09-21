@@ -23,8 +23,14 @@
         <p>{{ topic.content }}</p>
     </article>
 
-    {% for flashMessage in app.flashes('success') %}
-        <div class="alert alert-success">{{ flashMessage|trans }}</div>
+    {% for label, flashMessages in app.flashes %}
+        {% if label in ['success', 'danger'] %}
+            {% for message in flashMessages %}
+                <div class="alert alert-{{ label }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
     {% endfor %}
 
     <h2>{{ 'topic.comments_heading'|trans({'%count%': comments|length}) }}</h2>
@@ -48,7 +54,7 @@
 
     <h3>{{ 'topic.add_comment_heading'|trans }}</h3>
     {{ form_start(commentForm) }}
-        {{ form_row(commentForm.content) }}
-        {{ form_widget(commentForm.submit) }}
+    {{ form_row(commentForm.content) }}
+    {{ form_widget(commentForm.submit) }}
     {{ form_end(commentForm) }}
 {% endblock %}

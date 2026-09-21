@@ -10,10 +10,11 @@ use App\Form\TopicType;
 use App\Repository\TopicRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 final class TopicController extends AbstractController
 {
@@ -78,8 +79,12 @@ final class TopicController extends AbstractController
 		EntityManagerInterface $entityManager,
 	): Response
 	{
-		if ($this->denyAccessUnlessGranted('EDIT', $topic))
+		try
 		{
+			$this->denyAccessUnlessGranted('EDIT', $topic);
+		} catch (AccessDeniedException $e)
+		{
+			$this->addFlash('danger', $e->getMessage());
 			return $this->redirectToRoute('app_topic_show', ['id' => $topic->getId()]);
 		}
 		$form = $this->createForm(TopicType::class, $topic);

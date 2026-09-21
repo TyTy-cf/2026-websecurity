@@ -65,6 +65,7 @@ security:
         - { path: ^/api$, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/sujets/\d+/modifier$, roles: ROLE_USER }
 
 when@test:
     security:

@@ -44,4 +44,8 @@
 3. Ok la modification est passée
 4. Ok
 5. La modification est effective !
-6. 
+6. Ajout d'une règle sur le firewall : "{ path: ^/sujets/\d+/modifier$, roles: ROLE_USER }", création du TopicVoter.
+
+## Exercice 6
+
+1. 

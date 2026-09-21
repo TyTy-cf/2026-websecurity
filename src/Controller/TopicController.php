@@ -12,7 +12,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class TopicController extends AbstractController
 {
@@ -67,12 +69,19 @@ final class TopicController extends AbstractController
         ]);
     }
 
+
+    #[isGranted('TOPIC_EDIT','topic')]
     #[Route('/sujets/{id}/modifier', name: 'app_topic_edit')]
     public function edit(
         Topic $topic,
         Request $request,
         EntityManagerInterface $entityManager,
     ): Response {
+
+//        if($topic->getAuthor() !== $this->getUser()) {
+//            throw new AccessDeniedHttpException();
+//        }
+
         $form = $this->createForm(TopicType::class, $topic);
         $form->handleRequest($request);
 

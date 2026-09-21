@@ -7,13 +7,16 @@ HttpOnly : true Secure: true SameSite : Lax
 Exercice 2 :
 Type Stocké
 
-Exercice 3 :
-Type Stocké
 
-
-Exercice 4 : 
+Exercice 3 : 
 Type : DOM-based
 
-Exercice 5
+Exercice 4
 1 :#ref=CarterDavis1
+. Ce correctif peut-il être fait côté serveur (Symfony/Twig) ? Pourquoi ? 
+
+Exo 5 
+
+
+
 

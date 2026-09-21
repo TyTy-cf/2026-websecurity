@@ -9,7 +9,8 @@ window.addEventListener('load', () => {
     const ref: string|null = hashParams.get('ref');
 
     if (ref) {
-        banner.innerHTML = `<strong>${ref}</strong> pense que cette catégorie va te plaire !`;
+        let strong = document.createElement("<strong>${ref}</strong>");
+        banner.append(strong + ` pense que cette catégorie va te plaire !`);
     }
 
 });

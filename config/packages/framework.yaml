@@ -2,9 +2,12 @@
 framework:
     secret: '%env(APP_SECRET)%'
     session:
-        cookie_secure: false
-        cookie_httponly: false
-        cookie_samesite: null
+        cookie_secure: 'auto'
+    html_sanitizer:
+        sanitizers:
+            app.post_sanitizer:
+                allow_elements:
+                - h1
 
     #esi: true
     #fragments: true

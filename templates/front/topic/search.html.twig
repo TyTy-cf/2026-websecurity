@@ -3,7 +3,7 @@
 {% block title %}{{ 'search.title'|trans }}{% endblock %}
 
 {% block body %}
-    <h1 class="my-4">{{ 'search.results_for'|trans({'%query%': query}) }}</h1>
+    <h1 class="my-4">{{ 'search.results_for'|trans({'%query%': query})|sanitize_html('app.post_sanitizer') }}</h1>
 
     {% for topic in topics %}
         <div class="card mb-3 col-6 mx-auto">

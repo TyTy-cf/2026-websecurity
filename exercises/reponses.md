@@ -12,7 +12,7 @@ Type Stocké
 
 
 Exercice 4 : 
-Type : 
+Type : DOM-based
 
 Exercice 5
 1 :#ref=CarterDavis1

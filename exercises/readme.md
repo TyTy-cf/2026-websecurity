@@ -95,6 +95,25 @@
 
 3. **Aller au-delà d'une simple popup : démontrer un impact réel.** Un simple `alert(1)` prouve l'exécution de code, mais ne démontre pas pourquoi cela est dangereux. Essayez d'illustrer une action effectuée *au nom de la victime* sans son consentement, par exemple un paylaod qui soumet un autre commentaire via `fetch()` lors du chargement de la page
 
+```ts
+<script>
+    window.addEventListener('load', () => {
+        const inputToken = document.querySelector('[name="comment[_token]"]').value;
+        if (inputToken) {
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    'comment[content]': 'posted automatically by XSS',
+                    'comment[submit]': '',
+                    'comment[_token]': inputToken,
+                }),
+            });
+        }
+    });
+</script>
+```
+
 4. **Mettre en place le correctif** : que faire pour éviter cette problématique ?
 
 5. **Qualifier la faille.** Quel type de XSS vient-on de corriger ?

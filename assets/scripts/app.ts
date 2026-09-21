@@ -13,5 +13,4 @@ window.addEventListener('load', () => {
         strong.textContent = ref;
         banner.append(strong, ' pense que cette catégorie va te plaire !');
     }
-
 });

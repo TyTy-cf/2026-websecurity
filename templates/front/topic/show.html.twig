@@ -35,7 +35,7 @@
                 <div>
                     <strong>{{ comment.author.nickname }}</strong>
                     <span class="text-muted small">&mdash; {{ comment.createdAt|date('d/m/Y H:i') }}</span>
-                    <div>{{ comment.content|raw }}</div>
+                    <div>{{ comment.content|raw|sanitize_html(sanitizer = "default") }}</div>
                 </div>
                 {% if app.user and app.user == comment.author %}
                     <a href="{{ path('app_comment_delete', { id: comment.id }) }}" class="btn btn-sm btn-outline-danger">{{ 'common.delete'|trans }}</a>

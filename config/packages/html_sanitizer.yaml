@@ -1,0 +1,7 @@
+# config/packages/html_sanitizer.yaml
+framework:
+  html_sanitizer:
+    sanitizers:
+      app.post_sanitizer:
+        block_elements:
+          - h1

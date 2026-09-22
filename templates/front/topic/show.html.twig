@@ -38,7 +38,10 @@
                     <div>{{ comment.content|raw }}</div>
                 </div>
                 {% if app.user and app.user == comment.author %}
-                    <a href="{{ path('app_comment_delete', { id: comment.id }) }}" class="btn btn-sm btn-outline-danger">{{ 'common.delete'|trans }}</a>
+                    <form action="{{ path('app_comment_delete', { id: comment.id }) }}" method="post">
+                        <input name="_token"  type="hidden" value="{{ csrf_token("delete-comment-" ~ comment.id) }}">
+                        <input type="submit" class="btn btn-sm btn-outline-danger" value="{{ 'common.delete'|trans }}">
+                    </form>
                 {% endif %}
             </li>
         {% else %}
@@ -48,7 +51,7 @@
 
     <h3>{{ 'topic.add_comment_heading'|trans }}</h3>
     {{ form_start(commentForm) }}
-        {{ form_row(commentForm.content) }}
-        {{ form_widget(commentForm.submit) }}
+    {{ form_row(commentForm.content) }}
+    {{ form_widget(commentForm.submit) }}
     {{ form_end(commentForm) }}
 {% endblock %}

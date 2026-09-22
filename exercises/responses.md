@@ -58,3 +58,11 @@
 8. Voir la config de nelmio_security.yaml
 9. Voir config nelmio_security.yaml, ça corrige la faille du ClickJacking
 
+## Exercice 7
+
+1. Requête HTTP avec token passé en cookie et renvoyé par la réponse.
+2. Le bouton supprimer est un lien <a> alors que le formulaire est submit par un button.
+3. Ok
+4. Le commentaire a disparu, la suppression a fonctionné.
+5. Le commentaire disparait aussi, la route est public !
+6. La route n'est pas sécurisée dans le firewall, il n'y a pas de Voter sur Comment pour valider que l'utilisateur est bien propriétaire, la route est en GET alors qu'elle devrait être en DELETE.

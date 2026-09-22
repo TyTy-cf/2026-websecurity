@@ -11,6 +11,12 @@ security:
                 class: App\Entity\User
                 property: email
 
+        # used to reload user from JWT (identifier is the numeric id, not the email)
+        app_user_provider_by_id:
+            entity:
+                class: App\Entity\User
+                property: id
+
     firewalls:
         dev:
             # Ensure dev tools and static assets are always allowed
@@ -20,6 +26,7 @@ security:
         api_login:
             pattern: ^/api/login_check
             stateless: true
+            provider: app_user_provider
             json_login:
                 check_path: /api/login_check
                 username_path: email
@@ -30,6 +37,7 @@ security:
         api:
             pattern: ^/api
             stateless: true
+            provider: app_user_provider_by_id
             jwt: ~
 
         main:

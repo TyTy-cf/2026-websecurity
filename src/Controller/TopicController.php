@@ -8,11 +8,13 @@ use App\Entity\User;
 use App\Form\CommentType;
 use App\Form\TopicType;
 use App\Repository\TopicRepository;
+use App\Security\TopicVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class TopicController extends AbstractController
 {
@@ -68,6 +70,7 @@ final class TopicController extends AbstractController
     }
 
     #[Route('/sujets/{id}/modifier', name: 'app_topic_edit')]
+    #[isGranted(TopicVoter::EDIT, 'topic')]
     public function edit(
         Topic $topic,
         Request $request,

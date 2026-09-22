@@ -56,6 +56,9 @@ security:
                 samesite: lax
             logout:
                 path: app_logout
+            login_throttling:
+                max_attempts: 3
+                interval: '15 minutes'
                 # where to redirect after logout
                 # target: app_any_route
 

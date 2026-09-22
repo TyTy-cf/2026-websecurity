@@ -1,0 +1,34 @@
+nelmio_security:
+    # prevents framing of the entire site
+    clickjacking:
+        paths:
+            '^/.*': DENY
+
+    csp:
+        enforce:
+            default-src: [ "'self'" ]
+            script-src: [ "'self'" ]
+            style-src: [ "'self'" ]
+            img-src: [ "'self'", 'https://picsum.photos', 'https://fastly.picsum.photos', 'data:']
+
+    # disables content type sniffing for script resources
+    content_type:
+        nosniff: true
+
+    # Send a full URL in the `Referer` header when performing a same-origin request,
+    # only send the origin of the document to secure destination (HTTPS->HTTPS),
+    # and send no header to a less secure destination (HTTPS->HTTP).
+    # If `strict-origin-when-cross-origin` is not supported, use `no-referrer` policy,
+    # no referrer information is sent along with requests.
+    referrer_policy:
+        enabled: true
+        policies:
+            - 'no-referrer'
+            - 'strict-origin-when-cross-origin'
+
+    # HSTS : force le navigateur à revenir en HTTPS pour les prochaines visites (exercice 6, Q8).
+    # max-age volontairement court au départ (1h) : voir le piège expliqué dans la correction.
+    forced_ssl:
+        hsts_max_age: 3600          # durée de mémorisation en secondes (1 heure ici)
+        hsts_subdomains: false      # on n'étend pas la règle aux sous-domaines pour l'instant
+        hsts_preload: false         # pas d'inscription sur la liste preload des navigateurs

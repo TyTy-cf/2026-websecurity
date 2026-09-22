@@ -7,11 +7,14 @@ use App\Form\RegistrationType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
@@ -44,13 +47,46 @@ class SecurityController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
+        #[Autowire(service: 'limiter.registration')]
+        RateLimiterFactory $anonymousApiLimiter,
         MailerInterface $mailer,
+        UserRepository $userRepository,
     ): Response {
+        $limiter = $anonymousApiLimiter->create($request->getClientIp());
+        $limit = $limiter->consume();
+        $headers = [
+            'X-RateLimit-Remaining' => $limit->getRemainingTokens(),
+            'X-RateLimit-Limit' => $limit->getLimit(),
+        ];
+
+        if (false === $limit->isAccepted()) {
+            throw new TooManyRequestsHttpException(
+                $limit->getRetryAfter()->getTimestamp() - time(),
+                headers: $headers,
+            );
+        }
+
         $user = new User();
         $form = $this->createForm(RegistrationType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $existingUser = $userRepository->findOneBy(['email' => $user->getEmail()]);
+
+            if (null !== $existingUser) {
+                $email = (new Email())
+                    ->from('no-reply@reddit-ish.local')
+                    ->to($existingUser->getEmail())
+                    ->subject('Tentative d\'inscription')
+                    ->text('Une tentative de création de compte a eu lieu avec votre adresse e-mail, mais vous possédez déjà un compte sur Reddit-Ish. Si ce n\'était pas vous, vous pouvez ignorer cet e-mail. Si vous avez oublié votre mot de passe, utilisez la fonction de réinitialisation depuis la page de connexion.');
+
+                $mailer->send($email);
+
+                $this->addFlash('success', 'flash.account_created');
+
+                return $this->redirectToRoute('app_login');
+            }
+
             $user->setPassword($passwordHasher->hashPassword($user, $form->get('plainPassword')->getData()))
                 ->setRoles([])
                 ->setCreatedAt(new \DateTime())

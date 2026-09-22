@@ -2,24 +2,24 @@
 
 namespace App\Security;
 
-use App\Entity\Topic;
+use App\Entity\Comment;
 use App\Entity\User;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
-class TopicVoter extends Voter
+class CommentVoter extends Voter
 {
     const VIEW = 'view';
-    const EDIT = 'edit';
+    const DELETE = 'delete';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        if (!in_array($attribute, [self::VIEW, self::EDIT])) {
+        if (!in_array($attribute, [self::VIEW, self::DELETE])) {
             return false;
         }
 
-        if (!$subject instanceof Topic) {
+        if (!$subject instanceof Comment) {
             return false;
         }
 
@@ -28,12 +28,12 @@ class TopicVoter extends Voter
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
     {
-        /** @var Topic $topic */
-        $topic = $subject;
+        /** @var Comment $comment */
+        $comment = $subject;
 
         return match($attribute) {
             self::VIEW => $this->canView(),
-            self::EDIT => $this->canEdit($topic, $token, $vote),
+            self::DELETE => $this->canDelete($comment, $token, $vote),
             default => throw new \LogicException('This code should not be reached!')
         };
     }
@@ -43,7 +43,7 @@ class TopicVoter extends Voter
         return true;
     }
 
-    private function canEdit(Topic $topic, TokenInterface $token, ?Vote $vote = null): bool
+    private function canDelete(Comment $comment, TokenInterface $token, ?Vote $vote = null): bool
     {
         $user = $token->getUser();
 
@@ -52,13 +52,13 @@ class TopicVoter extends Voter
             return false;
         }
 
-        if ($user === $topic->getAuthor()) {
+        if ($user === $comment->getAuthor()) {
             return true;
         }
 
         $vote?->addReason(sprintf(
-            'The logged in user (username: %s) is not the author of this topic (id: %d).',
-            $user->getNickname(), $topic->getId()
+            'The logged in user (username: %s) is not the author of this comment (id: %d).',
+            $user->getNickname(), $comment->getId()
         ));
 
         return false;

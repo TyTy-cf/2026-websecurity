@@ -47,6 +47,12 @@ COPY user_entry_point.sh /user_entry_point.sh
 RUN chmod +x /user_entry_point.sh
 RUN /user_entry_point.sh ${USER_ID} ${GROUP_ID}
 
+# Appliqué en tout dernier : open_basedir casse l'install d'extensions PEAR/PECL
+# et d'autres opérations de build qui ont besoin d'accéder au filesystem hors
+# de /var/www/html (ex: xdebug ci-dessus). zzz- garantit qu'il est chargé après
+# tous les autres conf.d/*.ini (ordre alphabétique).
+COPY docker/security.ini /usr/local/etc/php/conf.d/zzz-security.ini
+
 #switch to the good user
 USER ${USER_ID}:${GROUP_ID}
 

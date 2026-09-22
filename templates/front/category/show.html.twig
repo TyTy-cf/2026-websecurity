@@ -11,8 +11,7 @@
         <div class="col-6 mx-auto mb-4">
             <label for="share-link" class="form-label">{{ 'category.share_label'|trans }}</label>
             <input id="share-link" type="text" class="form-control" readonly
-                   value="{{ url('app_category_show', { id: category.id }) }}#ref={{ app.user.nickname }}"
-                   onclick="this.select()">
+                   value="{{ url('app_category_show', { id: category.id }) }}#ref={{ app.user.nickname }}">
         </div>
     {% endif %}
 

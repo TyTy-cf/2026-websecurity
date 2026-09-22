@@ -9,15 +9,15 @@ use App\State\CurrentUserProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-#[UniqueEntity(fields: ['email'], message: 'Cette adresse e-mail est déjà utilisée.')]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_UUID', fields: ['uuid'])]
 #[ApiResource(
     operations: [
         new Get(
@@ -39,6 +39,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180)]
     #[Groups(['user:read'])]
     private ?string $email = null;
+
+    /**
+     * Identifiant public, opaque et non devinable, utilisé à la place de l'email
+     * dans le payload du JWT (qui n'est ni chiffré ni destiné à rester confidentiel).
+     */
+    #[ORM\Column(length: 36, unique: true)]
+    private ?string $uuid = null;
 
     /**
      * @var list<string> The user roles
@@ -86,6 +93,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->topics = new ArrayCollection();
         $this->comments = new ArrayCollection();
+        $this->uuid = Uuid::v4()->toRfc4122();
     }
 
     public function getId(): ?int
@@ -103,6 +111,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->email = $email;
 
         return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
     }
 
     /**

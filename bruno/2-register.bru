@@ -1,0 +1,19 @@
+meta {
+  name: 2 - Register
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://localhost:8443/inscription
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  registration[email]: carter.davis1@example.com
+  registration[nickname]: nickname
+  registration[plainPassword][first]: Azerty123!
+  registration[plainPassword][second]: Azerty123!
+  registration[_token]: {{csrf_token}}
+}

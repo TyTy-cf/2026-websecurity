@@ -1,4 +1,10 @@
 window.addEventListener('load', () => {
+    const shareLink = document.getElementById('share-link') as HTMLInputElement | null;
+
+    if (shareLink) {
+        shareLink.addEventListener('click', () => shareLink.select());
+    }
+
     const banner = document.getElementById('ref-banner');
 
     if (!banner) {

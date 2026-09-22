@@ -4,13 +4,6 @@ nelmio_security:
         paths:
             '^/.*': DENY
 
-    csp:
-        enforce:
-            default-src: [ "'self'" ]
-            script-src: [ "'self'" ]
-            style-src: [ "'self'" ]
-            img-src: [ "'self'", 'https://picsum.photos', 'https://fastly.picsum.photos', 'data:']
-
     # disables content type sniffing for script resources
     content_type:
         nosniff: true
@@ -25,3 +18,25 @@ nelmio_security:
         policies:
             - 'no-referrer'
             - 'strict-origin-when-cross-origin'
+
+    csp:
+        enforce:
+            default-src:
+                - 'self'
+            script-src:
+                - 'self'
+            style-src:
+                - 'self'
+            frame-src:
+                - 'self'
+            img-src:
+                - 'self'
+                - 'https://picsum.photos'
+                - 'https://fastly.picsum.photos'
+            frame-ancestors:
+                - 'none'
+
+    forced_ssl:
+        enabled: true
+        hsts_max_age: 300
+        hsts_subdomains: true

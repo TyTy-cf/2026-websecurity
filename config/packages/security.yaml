@@ -11,6 +11,12 @@ security:
                 class: App\Entity\User
                 property: email
 
+        # used to reload the user from the JWT payload's identity claim (uuid, not email)
+        app_user_provider_uuid:
+            entity:
+                class: App\Entity\User
+                property: uuid
+
     firewalls:
         dev:
             # Ensure dev tools and static assets are always allowed
@@ -20,19 +26,21 @@ security:
         api_login:
             pattern: ^/api/login_check
             stateless: true
+            provider: app_user_provider
+            login_throttling:
+                max_attempts: 3
+                interval: '15 minutes'
             json_login:
                 check_path: /api/login_check
                 username_path: email
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
-            login_throttling:
-                max_attempts: 5
-                interval: '15 minutes'
 
         api:
             pattern: ^/api
             stateless: true
+            provider: app_user_provider_uuid
             jwt: ~
 
         main:

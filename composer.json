@@ -45,7 +45,9 @@
         "symfony/yaml": "7.4.*",
         "twig/extra-bundle": "^2.12|^3.29",
         "twig/twig": "^2.12|^3.29",
-        "symfony/html-sanitizer": "@stable"
+        "symfony/html-sanitizer": "@stable",
+        "nelmio/security-bundle": "^3.9.0",
+        "symfony/rate-limiter": "^7.4.18"
     },
     "config": {
         "allow-plugins": {

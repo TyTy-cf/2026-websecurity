@@ -59,3 +59,40 @@ Il faut modifier app.ts car il utilise innerHTML pour injecter le script. Il fau
 
 ## Exercice 6
 
+1. Une Content Security Policy (CSP) est un en-tête HTTP qui permet aux sites web de dire aux navigateurs quels fichiers et scripts ont le droit d'être chargés et exécutés. Elle limite l'impact d'une faille XSS en bloquant l'exécution du code injecté (comme les scripts non autorisés ou les balises inline), même si le site laisse passer l'injection.
+2. config/packages/nelmio_security.yaml 
+4. Le script injecté ne s'exécute plus. La boîte d'alerte ou le code de l'attaquant reste inerte dans le code HTML.
+6. La CSP n'a fait que neutraliser l'exploitation de la faille côté client.
+7. La CSP complète les correctifs, elle ne les remplace pas.
+
+
+## Exercice 7
+
+1. dans le post il y a le comment[_token]	"csrf-token" qui est passé dans la request. Rien dans la suppression.
+2. Le token CSRF est envoyé dans le formulaire mais pas dans la requête de suppression. Il faut le passer dans la requête de suppression pour que la suppression soit autorisée.
+On peut supprimer un article en mettant /supprimer/1 dans l'url. Aucun contrôle sur l'utilisateur
+3. On peut faire une page html avec une balise img et un src qui pointe vers l'url de suppression.
+4. Le commentaire est supprimé
+5. Le commentaire est supprimé, il n'y a pas de vérification sur l'utilisateur connecté.
+6. Il manque une vérification sur l'utilisateur connecté avant de supprimer le commentaire et une jeton CSRF.
+9. Plus possible de supprimer un commentaire sans être connecté et sans avoir le bon token CSRF.
+
+## Exercice 8
+1. {
+  "iat": 1790078274,
+  "exp": 1790081874,
+  "roles": [
+    "ROLE_USER"
+  ],
+  "username": "carter.davis1@example.com"
+}
+
+2. Le role est ROLE_USER mais est juste une info. Le mail est plus gênant.
+3. Le changement de role ne change rien et le token n'est pas valide si on le réencode
+4. Si le rôle pouvait être modifié et qu'il était pris en compte pour affecter le role à l'utilisateur, cela pourrait être dangereux.
+5. Le phpsessionId ne comporte pas de données utilisateur. En revanche si on l'intercepte on peut se connecter à la place de l'utilisateur.
+6. Un uid
+7. Non, le rôle n'a pas d'intérêt dans le json. Le role est déterminé une fois l'utilisateur connecté et retourné par le getMe
+
+## Exercice 9
+

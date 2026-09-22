@@ -582,3 +582,234 @@ gravé dans le token serait resté obsolète.
 
 
 
+
+
+# Exercice 9 — Login Throttling
+
+## Question 1 — Aucune limite sur /connexion
+
+Je boucle sur le formulaire de connexion avec un mauvais mot de passe. À la 5e tentative,
+à la 10e, à la 20e : toujours le même message "Identifiants invalides", le même temps de
+réponse, et je peux continuer. Rien ne me ralentit et rien ne me bloque.
+
+## Question 2 — Pareil sur l'API
+
+Je refais le test sur `POST /api/login_check` avec curl. Même chose : un 401 "Identifiants
+invalides." à chaque fois, autant de fois que je veux. Les deux routes se comportent pareil,
+aucune des deux est protégée.
+
+## Question 3 — Le risque
+
+Sans limite, on peut essayer les mots de passe en boucle : c'est du brute-force. Et si
+l'attaquant a récupéré une liste d'identifiants sur un autre site piraté, il peut tous les
+tester ici pour voir lesquels marchent (credential stuffing).
+
+J'ai chronométré une tentative sur l'API : environ 50 ms. Donc 10 000 mots de passe ça fait
+10 000 × 0,05 = 500 secondes, soit moins de 9 minutes en tapant une requête après l'autre. Et
+en lançant plusieurs requêtes en parallèle, ça descend sous la minute. Un mot de passe faible
+tient pas.
+
+## Question 4 — La fonctionnalité Symfony
+
+Symfony a ça en natif : `login_throttling`, qui se configure directement sur le firewall dans
+`security.yaml`. Ça s'appuie sur le composant Rate Limiter, mais y'a pas de code à écrire,
+c'est juste de la config.
+
+## Question 5 — Mettre en place la protection
+
+Je l'ai mis sur les deux firewalls qui authentifient, `main` (le site) et `api_login` (l'API),
+dans `config/packages/security.yaml` :
+
+```yaml
+login_throttling:
+    max_attempts: 5          # 5 échecs autorisés
+    interval: '15 minutes'   # sur une fenêtre de 15 minutes
+```
+
+5 tentatives sur 15 minutes, ça laisse largement la place à quelqu'un qui se trompe, mais ça
+casse complètement une attaque automatisée.
+
+## Question 6 — Vérifier le blocage
+
+Je rejoue les deux tests. Sur les deux routes, le blocage arrive à partir de la **6e**
+tentative (les 5 premières passent, la 6e est refusée).
+
+Sur l'API :
+```
+essai 5 -> HTTP 401 | Identifiants invalides.
+essai 6 -> HTTP 401 | Trop de tentatives de connexion échouées, veuillez réessayer dans 15 minutes.
+```
+
+Sur `/connexion` c'est le même seuil et le même message, mais l'enveloppe change : au lieu
+d'un 401 JSON, j'ai une redirection 302 vers le formulaire avec le message en flash. C'est
+normal, c'est juste la façon dont chaque firewall répond (`json_login` vs `form_login`), le
+comptage est identique.
+
+## Question 7 — Et l'utilisateur légitime ?
+
+Avec le bon mot de passe du premier coup, ça marche toujours. Et si je me trompe deux fois
+avant de taper le bon (donc sous le seuil de 5), la connexion passe quand même : la
+redirection m'envoie sur `/` au lieu de me renvoyer sur `/connexion`. Un utilisateur normal
+est pas pénalisé.
+
+J'ai aussi vérifié que le blocage d'un compte bloque pas tout le monde : après avoir bloqué
+`carter.davis1`, je me connecte sans problème avec `isabella.young62` depuis la même machine.
+C'est parce que Symfony crée deux compteurs par firewall (je les vois avec
+`php bin/console debug:container limiter`) :
+
+- `limiter._login_local_main` : compte par couple IP + identifiant
+- `limiter._login_global_main` : compte par IP seule, avec un seuil plus haut
+
+Le local empêche de s'acharner sur un compte précis, le global empêche de balayer plein de
+comptes différents depuis la même machine.
+
+## Question 8 — Le bon mot de passe juste après un blocage
+
+Une fois le compte bloqué, je retente avec le **bon** mot de passe : refusé quand même, avec
+le message "Trop de tentatives".
+
+Ça m'apprend que le throttling agit **avant** la vérification du mot de passe, pas après. Le
+compteur est consulté à l'entrée de l'authentification : si le seuil est dépassé, la requête
+est rejetée sans même regarder les identifiants. C'est ce qu'on veut, parce que si le contrôle
+se faisait après, l'attaquant saurait quand il tombe juste — et surtout le serveur continuerait
+à faire le calcul coûteux du hash à chaque tentative.
+
+## Question 9 — Documenter le correctif
+
+Un seul fichier modifié, `config/packages/security.yaml`, avec le même bloc `login_throttling`
+(`max_attempts: 5`, `interval: '15 minutes'`) sur deux firewalls : `main` et `api_login`.
+
+Il fallait bien le mettre sur les deux : ils ont chacun leurs compteurs séparés, donc protéger
+uniquement le formulaire aurait laissé `/api/login_check` grand ouvert, et l'attaquant serait
+juste passé par là.
+
+
+# Exercice 10 — Rate Limiter
+
+## Question 1 — Aucune limite sur /inscription
+
+J'ai un script (`span_register.sh`) qui poste le formulaire en boucle avec un email différent
+à chaque tour, en récupérant bien le jeton CSRF. Sans protection, il déroule jusqu'au bout :
+chaque requête renvoie un 302 et un compte est créé. Autant de comptes que de tentatives,
+aucun blocage.
+
+## Question 2 — Aucune limite sur l'API
+
+Je boucle sur `GET /api/topic` : 100 requêtes, 100 réponses en HTTP 200, aucun blocage. Même
+constat que sur l'inscription.
+
+## Question 3 — Installer le composant
+
+`composer require symfony/rate-limiter` (il était déjà dans le `composer.json` du projet).
+
+## Question 4 — Protéger /inscription
+
+D'abord je déclare les limiteurs dans `config/packages/rate_limiter.yaml` :
+
+```yaml
+framework:
+    rate_limiter:
+        registration:
+            policy: 'sliding_window'
+            limit: 5                 # 5 inscriptions autorisées
+            interval: '1 hour'       # sur une fenêtre glissante d'une heure
+```
+
+Puis je consomme un jeton dans `SecurityController::register()`, en identifiant par l'IP :
+
+```php
+// Exercice 10 : on compte que les envois du formulaire, pas les affichages.
+if ($request->isMethod('POST')) {
+    $limit = $registrationLimiter->create($request->getClientIp())->consume();
+
+    if (!$limit->isAccepted()) {
+        throw new TooManyRequestsHttpException(
+            $limit->getRetryAfter()->getTimestamp() - time(),
+            'Trop d\'inscriptions depuis cette adresse. Réessayez plus tard.',
+        );
+    }
+}
+```
+
+Deux détails qui comptent :
+
+- le `if ($request->isMethod('POST'))` : sans ça, chaque simple affichage de la page
+  consommerait un jeton, et quelqu'un qui ouvre le formulaire 5 fois sans rien envoyer serait
+  bloqué pour rien. On compte les soumissions, pas les visites.
+- le service s'injecte par le nom de l'argument : `RateLimiterFactoryInterface
+  $registrationLimiter` correspond au limiteur `registration` du yaml. Si je renomme
+  l'argument, Symfony trouve plus le service.
+
+## Question 5 — Protéger GET /api/topic
+
+Là c'est différent : c'est pas une action précise mais toute une famille de routes générées
+par API Platform (la collection, un sujet précis, etc.). Je peux pas aller mettre trois lignes
+dans chaque contrôleur, vu qu'il y en a pas.
+
+La solution c'est d'attraper la requête plus tôt, avec un listener sur `kernel.request`, et de
+filtrer sur l'URL au lieu du contrôleur (`src/EventSubscriber/ApiRateLimitSubscriber.php`) :
+
+```php
+#[AsEventListener(event: KernelEvents::REQUEST, priority: 16)]
+final readonly class ApiRateLimitSubscriber
+{
+    public function __construct(
+        private RateLimiterFactoryInterface $apiTopicLimiter,
+    ) {
+    }
+
+    public function __invoke(RequestEvent $event): void
+    {
+        $request = $event->getRequest();
+
+        if (!$event->isMainRequest() || !str_starts_with($request->getPathInfo(), '/api/topic')) {
+            return;
+        }
+
+        $limit = $this->apiTopicLimiter->create($request->getClientIp())->consume();
+
+        if (!$limit->isAccepted()) {
+            throw new TooManyRequestsHttpException(...);
+        }
+    }
+}
+```
+
+Avec le limiteur correspondant dans le yaml :
+
+```yaml
+api_topic:
+    policy: 'sliding_window'
+    limit: 60                # 60 requêtes autorisées
+    interval: '1 minute'     # sur une fenêtre glissante d'une minute
+```
+
+Le `isMainRequest()` sert à pas décompter deux fois quand Symfony fait une sous-requête
+interne. Et comme le test porte sur le chemin, toute nouvelle route sous `/api/topic` est
+protégée automatiquement, sans que j'aie à y penser.
+
+## Question 6 — Vérifier les deux protections
+
+Je relance les deux tests :
+
+- `/inscription` : 5 comptes créés, puis la 6e tentative renvoie **HTTP 429** et le script
+  s'arrête.
+  ```
+    5  HTTP 302  spam1790087975.5@example.com   compte créé
+    6  HTTP 429  spam1790087975.6@example.com   BLOQUÉ (rate limit)
+  ```
+- `/api/topic` : les requêtes passent normalement puis la 60e renvoie **HTTP 429**.
+
+Dans les deux cas c'est bien le code 429 (Too Many Requests), et une utilisation normale
+(m'inscrire une fois, consulter quelques sujets) marche toujours sans rien voir.
+
+## Ce que j'en retiens
+
+Les deux exercices utilisent le même composant Rate Limiter dessous, mais pas de la même
+façon :
+
+- l'exo 9 c'est de la **config pure** : `login_throttling` est déjà branché par Symfony sur
+  l'authentification, j'ai rien à écrire.
+- l'exo 10 c'est **à moi de décider** où et quoi compter, parce que Symfony sait pas ce qui
+  mérite d'être limité dans mon appli. D'où les deux approches : dans le contrôleur pour une
+  action précise, dans un listener pour une famille de routes.

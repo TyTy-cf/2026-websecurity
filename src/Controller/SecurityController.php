@@ -9,9 +9,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
@@ -45,7 +47,20 @@ class SecurityController extends AbstractController
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
         MailerInterface $mailer,
+        RateLimiterFactoryInterface $registrationLimiter,
     ): Response {
+        // Exercice 10 : on compte que les envois du formulaire, pas les affichages.
+        if ($request->isMethod('POST')) {
+            $limit = $registrationLimiter->create($request->getClientIp())->consume();
+
+            if (!$limit->isAccepted()) {
+                throw new TooManyRequestsHttpException(
+                    $limit->getRetryAfter()->getTimestamp() - time(),
+                    'Trop d\'inscriptions depuis cette adresse. Réessayez plus tard.',
+                );
+            }
+        }
+
         $user = new User();
         $form = $this->createForm(RegistrationType::class, $user);
         $form->handleRequest($request);

@@ -38,7 +38,7 @@
                     <div>{{ comment.content|raw|sanitize_html }}</div>
                 </div>
                 {% if app.user and app.user == comment.author %}
-                    <a href="{{ path('app_comment_delete', { id: comment.id }) }}" class="btn btn-sm btn-outline-danger">{{ 'common.delete'|trans }}</a>
+                    <a href="{{ path('app_comment_delete', { id: comment.id, _token: csrf_token('comment_delete_' ~ comment.id) }) }}" class="btn btn-sm btn-outline-danger">{{ 'common.delete'|trans }}</a>
                 {% endif %}
             </li>
         {% else %}

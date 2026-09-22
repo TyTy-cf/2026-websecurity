@@ -13,6 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class TopicController extends AbstractController
 {
@@ -68,11 +69,16 @@ final class TopicController extends AbstractController
     }
 
     #[Route('/sujets/{id}/modifier', name: 'app_topic_edit')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function edit(
         Topic $topic,
         Request $request,
         EntityManagerInterface $entityManager,
     ): Response {
+        if ($topic->getAuthor() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Vous ne pouvez modifier que vos sujets.');
+        }
+
         $form = $this->createForm(TopicType::class, $topic);
         $form->handleRequest($request);
 

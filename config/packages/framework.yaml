@@ -2,9 +2,10 @@
 framework:
     secret: '%env(APP_SECRET)%'
     session:
-        cookie_secure: false
-        cookie_httponly: false
-        cookie_samesite: null
+        # Exercice 1 — protections par défaut de Symfony restaurées
+        cookie_secure: auto     # cookie envoyé uniquement sur HTTPS (interception réseau)
+        cookie_httponly: true   # cookie invisible depuis document.cookie (vol par XSS)
+        cookie_samesite: lax    # cookie non envoyé sur les requêtes cross-site (CSRF)
 
     #esi: true
     #fragments: true

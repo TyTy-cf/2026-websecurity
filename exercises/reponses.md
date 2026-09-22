@@ -25,3 +25,17 @@ Exercice 6
 
 
 Exercice 7
+
+Excercice 8
+"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3OTAwNzcyMTgsImV4cCI6MTc5MDA4MDgxOCwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoiY2FydGVyLmRhdmlzMUBleGFtcGxlLmNvbSJ9.EovVaqjKkw6FQPIxIQqUck8x0SZecnpKl_c4IQZUsUtAKml-axxAjWjioW1mws2FM8zR0L0VQYVvM1_7TGJ9KlXw-m6Q5P9RKgs9gYlQJBiJrzcoVEXQ8B_m3TjEa_W1EbrwnXEgsDhPgy2mZVELVsjClGmNmROWjHpjS4V-GENTfCAwy5C0JGcFmkg9E94gtbJ-bysm8KDWqYJfgHuGcqrwdESQziBty9eed8xmN2sLmiBOUYbTYnIzAgXBIavXEVrIrSuZ-5lDDvns0j2rCQUkkIZQUuJw_7s2qS6U6a0qjWs1xeXohW5yWZz1Op-lT_znrD40PSfImok6WA-M-Q"
+
+décodé : 
+{
+"iat": 1790077936,
+"exp": 1790081536,
+"roles": ["ROLE_USER"],
+"username": "carter.davis1@example.com"
+}
+
+
+

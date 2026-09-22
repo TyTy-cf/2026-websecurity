@@ -48,4 +48,4 @@
 
 ## Exercice 6
 
-1. 
+1. test

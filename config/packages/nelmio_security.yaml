@@ -1,5 +1,11 @@
 # config/packages/nelmio_security.yaml
 nelmio_security:
+    forced_ssl:
+        enabled: true
+        hsts_max_age: 30
+        hsts_subdomains: false
+        hsts_preload: false
+
     csp:
         enabled: true
         report_logger_service: logger

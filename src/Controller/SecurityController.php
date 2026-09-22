@@ -4,14 +4,18 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\RegistrationType;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
@@ -43,6 +47,7 @@ class SecurityController extends AbstractController
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
         RateLimiterFactory $registrationLimiter,
+        MailerInterface $mailer
     ): Response {
         $limit = $registrationLimiter->create($request->getClientIp())->consume();
         if (!$limit->isAccepted()) {
@@ -54,12 +59,27 @@ class SecurityController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword($passwordHasher->hashPassword($user, $form->get('plainPassword')->getData()));
-            $user->setRoles([]);
-            $user->setCreatedAt(new \DateTime());
+            $user->setPassword($passwordHasher->hashPassword($user, $form->get('plainPassword')->getData()))
+                ->setRoles([])
+                ->setCreatedAt(new \DateTime())
+                ->setActivationCode(bin2hex(random_bytes(16)));
 
             $entityManager->persist($user);
             $entityManager->flush();
+
+            $activationUrl = $this->generateUrl(
+                'app_register_validate',
+                ['activationCode' => $user->getActivationCode()],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            );
+
+            $email = (new Email())
+                ->from('no-reply@reddit-ish.local')
+                ->to($user->getEmail())
+                ->subject('Confirmation de votre inscription')
+                ->text("Merci de votre inscription, finalisez celle-ci en cliquant sur ce lien : {$activationUrl}");
+
+            $mailer->send($email);
 
             $this->addFlash('success', 'flash.account_created');
 
@@ -69,5 +89,25 @@ class SecurityController extends AbstractController
         return $this->render('security/register.html.twig', [
             'registrationForm' => $form,
         ]);
+    }
+
+    #[Route(path: '/valider-inscription/{activationCode}', name: 'app_register_validate')]
+    public function validateRegistration(
+        string $activationCode,
+        EntityManagerInterface $entityManager,
+        UserRepository $userRepository,
+    ): Response {
+        $user = $userRepository->findOneBy(['activationCode' => $activationCode]);
+
+        if (null === $user) {
+            throw $this->createNotFoundException();
+        }
+
+        $user->setActivationCode(null);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'flash.account_activated');
+
+        return $this->redirectToRoute('app_login');
     }
 }

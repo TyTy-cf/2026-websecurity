@@ -44,6 +44,8 @@ search:
     results_for: 'Résultats de recherche pour « %query% »'
     no_results: Aucun sujet trouvé.
 
+
+
 security:
     login_title: Connexion
     sign_in_heading: Veuillez vous connecter
@@ -64,6 +66,7 @@ register:
     has_account: 'Déjà un compte ? Connectez-vous'
 
 flash:
+    account_activated: Compte activé !
     login_required: Vous devez être connecté !
     comment_posted: Votre commentaire a été publié.
     topic_updated: Le sujet a été mis à jour.

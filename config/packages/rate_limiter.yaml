@@ -13,3 +13,7 @@ framework:
             policy: 'fixed_window'
             limit: 10
             interval: '1 minutes'
+        api_topic:
+            policy: 'fixed_window'
+            limit: 30
+            interval: '1 minutes'

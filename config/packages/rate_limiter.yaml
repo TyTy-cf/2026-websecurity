@@ -3,9 +3,13 @@ framework:
         app_user_provider:
             # use 'sliding_window' if you prefer that policy
             policy: 'fixed_window'
-            limit: 2
+            limit: 10
             interval: '1 minutes'
         api_login:
             policy: 'fixed_window'
             limit: 5
+            interval: '1 minutes'
+        registration:
+            policy: 'fixed_window'
+            limit: 10
             interval: '1 minutes'

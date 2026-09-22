@@ -10,6 +10,11 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
+        # Exercice 8 : recharge l'utilisateur par son uuid (identité portée par le JWT).
+        app_user_uuid_provider:
+            entity:
+                class: App\Entity\User
+                property: uuid
 
     firewalls:
         dev:
@@ -20,6 +25,7 @@ security:
         api_login:
             pattern: ^/api/login_check
             stateless: true
+            provider: app_user_provider
             # Exercice 9 : limite les tentatives de connexion (brute-force) sur l'API.
             login_throttling:
                 max_attempts: 5          # 5 échecs autorisés
@@ -34,6 +40,7 @@ security:
         api:
             pattern: ^/api
             stateless: true
+            provider: app_user_uuid_provider
             jwt: ~
 
         main:

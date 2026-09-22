@@ -13,6 +13,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -35,6 +36,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     #[Groups(['user:read'])]
     private ?int $id = null;
+
+    // Identifiant public, non devinable, utilisé dans le JWT à la place de l'email (exercice 8).
+    #[ORM\Column(length: 36, unique: true)]
+    private ?string $uuid = null;
 
     #[ORM\Column(length: 180)]
     #[Groups(['user:read'])]
@@ -86,11 +91,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->topics = new ArrayCollection();
         $this->comments = new ArrayCollection();
+        $this->uuid = Uuid::v4()->toRfc4122();
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
     }
 
     public function getEmail(): ?string

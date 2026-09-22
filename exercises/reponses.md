@@ -16,7 +16,11 @@ Exercice 4
 . Ce correctif peut-il être fait côté serveur (Symfony/Twig) ? Pourquoi ? 
 
 Exo 5 
+Tout les utilisateurs ont acces à tout les modification y compris les utilisateur non connecté
 
+Exercice 6
+1 Mécanisme de sécurité web standardisé
+2 Utilisation composer require nelmio/security-bundle
 
 
 

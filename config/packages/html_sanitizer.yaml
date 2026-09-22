@@ -1,0 +1,4 @@
+# config/packages/html_sanitizer.yaml
+framework:
+    html_sanitizer:
+        enabled: false

@@ -48,4 +48,13 @@
 
 ## Exercice 6
 
-1. test
+1. Bloque l'exécution de scripts malveillants en interdisant les scripts inline, elle aide à empêcher le ClickJacking, limite la destination des requêtes.
+2. Soit un listener, soit avec nelmio/security-bundle (solution choisie)
+3. Voir le fichier nelmio_security.yaml
+4. Elles sont toutes corrigées
+5. Les images et les styles ne s'affichent plus donc il faut ajouter des règles dans la config pour autoriser les domaines et les base64 pour les photos, et mettre les feuilles de style en self
+6. Oui, et on doit pouvoir contourner
+7. Je pense qu'il faut avoir les deux pour maximiser la sécurité et les blocages et avoir des protections côté serveur et côté front.
+8. Voir la config de nelmio_security.yaml
+9. Voir config nelmio_security.yaml, ça corrige la faille du ClickJacking
+

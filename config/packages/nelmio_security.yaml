@@ -28,13 +28,23 @@ nelmio_security:
             level1_fallback: false
             default-src: [ "'self'" ]
             object-src: [ "'none'" ]
-            script-src:
-            - "'self'"
-            - "https://picsum.photos"
-            - "https://fastly.picsum.photos"
+            script-src: [ "'self'" ]
             style-src: [ "'self'" ]
             img-src:
             - "'self'"
             - "data:"
             - "https://picsum.photos"
             - "https://fastly.picsum.photos"
+
+    forced_ssl:
+        enabled: true
+        # Le code HTTP utilisé pour rediriger de HTTP vers HTTPS
+        redirect_status_code: 301
+
+        # --- C'est ici que se configure le HSTS ---
+        # Durée en secondes (ex: 5 mn = 300)
+        hsts_max_age: 300
+        # Applique la règle aux sous-domaines (recommandé)
+        hsts_subdomains: true
+        # Permet l'inclusion dans la Preload List des navigateurs
+        hsts_preload: true

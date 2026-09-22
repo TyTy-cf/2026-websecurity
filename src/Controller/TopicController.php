@@ -5,9 +5,11 @@ namespace App\Controller;
 use App\Entity\Comment;
 use App\Entity\Topic;
 use App\Entity\User;
+use App\Form\CommentDeleteType;
 use App\Form\CommentType;
 use App\Form\TopicType;
 use App\Repository\TopicRepository;
+use App\Voter\CommentVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -62,10 +64,21 @@ final class TopicController extends AbstractController
             return $this->redirectToRoute('app_topic_show', ['id' => $topic->getId()]);
         }
 
+        $deleteForms = [];
+        foreach ($topic->getComments() as $existingComment) {
+            if ($this->isGranted(CommentVoter::DELETE, $existingComment)) {
+                $deleteForms[$existingComment->getId()] = $this->createForm(CommentDeleteType::class, null, [
+                    'action' => $this->generateUrl('app_comment_delete', ['id' => $existingComment->getId()]),
+                    'csrf_token_id' => 'comment_delete_' . $existingComment->getId(),
+                ])->createView();
+            }
+        }
+
         return $this->render('front/topic/show.html.twig', [
             'topic' => $topic,
             'comments' => $topic->getComments(),
             'commentForm' => $form,
+            'deleteForms' => $deleteForms,
         ]);
     }
 

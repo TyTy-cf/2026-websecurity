@@ -37,8 +37,8 @@
                     <span class="text-muted small">&mdash; {{ comment.createdAt|date('d/m/Y H:i') }}</span>
                     <div>{{ comment.content|raw|sanitize_html }}</div>
                 </div>
-                {% if app.user and app.user == comment.author %}
-                    <a href="{{ path('app_comment_delete', { id: comment.id, _token: csrf_token('comment_delete_' ~ comment.id) }) }}" class="btn btn-sm btn-outline-danger">{{ 'common.delete'|trans }}</a>
+                {% if deleteForms[comment.id] is defined %}
+                    {{ form(deleteForms[comment.id]) }}
                 {% endif %}
             </li>
         {% else %}

@@ -24,4 +24,4 @@ Exercice 6
 3 Content-Security-Policy : Les paramètres de la page ont empêché l’application d’un style (style-src-elem) à l’adresse https://localhost:8443/build/vendors-node_modules_bootstrap_dist_css_bootstrap_css.css, car il enfreint la directive suivante : « style-src 'unsafe-inline' 'nonce-f401ff2cd7af3abcf96857c085475268' »
 
 
-
+Exercice 7

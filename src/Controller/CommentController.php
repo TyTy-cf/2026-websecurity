@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Comment;
+use App\Form\CommentDeleteType;
 use App\Repository\CommentRepository;
+use App\Voter\CommentVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class CommentController extends AbstractController
 {
 
-    #[Route('/commentaires/{id}/supprimer', name: 'app_comment_delete', methods: ['GET'])]
+    #[Route('/commentaires/{id}/supprimer', name: 'app_comment_delete', methods: ['POST'])]
     public function delete(
         string                 $id,
         Request                $request,
@@ -25,8 +27,15 @@ final class CommentController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        if (!$this->isCsrfTokenValid('comment_delete_' . $comment->getId(), $request->query->get('_token'))) {
-            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        $this->denyAccessUnlessGranted(CommentVoter::DELETE, $comment);
+
+        $form = $this->createForm(CommentDeleteType::class, null, [
+            'csrf_token_id' => 'comment_delete_' . $comment->getId(),
+        ]);
+        $form->handleRequest($request);
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            throw $this->createAccessDeniedException('Requête invalide.');
         }
 
         $topic = $comment->getTopic();

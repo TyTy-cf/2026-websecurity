@@ -1,0 +1,8 @@
+# config/packages/rate_limiter.yaml
+
+framework:
+    rate_limiter:
+        anonymous_api:
+            policy: 'fixed_window'
+            limit: 5
+            interval: '1 minute'

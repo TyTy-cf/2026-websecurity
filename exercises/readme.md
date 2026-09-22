@@ -295,6 +295,12 @@ x onfocus=alert(1) autofocus=x
     - `GET /api/user/me` (nécessite d'être connecté)
 - Connectez-vous via `/api/login_check` avec un des comptes préremplis. Soit par Postman/Insomnia ou via le bouton **Authorize** de l'interface `/api`) et récupérez le jeton renvoyé
 
+- Si nécessaire : générer la paire de clé pour le JWT :
+
+```
+php bin/console lexik:jwt:generate-keypair
+```
+
 
 ## Questions
 

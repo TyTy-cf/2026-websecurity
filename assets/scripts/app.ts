@@ -11,8 +11,7 @@ window.addEventListener('load', () => {
 
     if (ref) {
         const strong = document.createElement('strong');
-        strong.textContent= ref;
-        //banner.innerHTML = `<strong>${ref}</strong> pense que cette catégorie va te plaire !`;
+        strong.textContent = ref;
         banner.append(strong, ' pense que cette catégorie va te plaire !');
     }
 

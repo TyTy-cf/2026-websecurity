@@ -99,3 +99,17 @@
 3. OK
 4. OK
 5. Oui c'est tout bon.
+
+## Exercice 11
+
+1. Le compte se créé, je reçois le mail et je peux me connecter avec.
+2. Le message est : "Cette adresse e-mail est déjà utilisée." Dans un div#registration_email_error1
+3. On peut trouver l'email d'une personne ayant un compte sur le site en spammant le login avec un script
+4. Une fois le mail trouvé, on peut spammer le script jusqu'à trouver le mot de passe et tester la combinaison sur d'autres sites.
+5. Le rate limiter ne l'empêche pas totalement mais ralentit les tentatives.
+6. C'est l'annotation UniqueEntity sur le champ email.
+7. On affiche toujours le même message de succès quoi qu'il arrive par contre on envoit le mail que si le compte n'existe pas encore.
+8. Même comportement dans les deux cas, redirection sur le login avec un message de succès. Par contre on peut se connecter sans passer par la validation du compte donc j'ai modifié la config pour bloquer le compte tant qu'il n'est pas activé.
+
+## Exercice 12
+

@@ -10,6 +10,11 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
+        # used by the API (JWT): the token carries an opaque uuid, not the email
+        app_user_uuid_provider:
+            entity:
+                class: App\Entity\User
+                property: uuid
 
     firewalls:
         dev:
@@ -20,16 +25,22 @@ security:
         api_login:
             pattern: ^/api/login_check
             stateless: true
+            provider: app_user_provider
             json_login:
                 check_path: /api/login_check
                 username_path: email
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
-                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+                failure_handler: App\Security\ApiAuthenticationFailureHandler
+            # Brute-force protection: max 5 failed attempts per (IP + username) / 15 min
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
 
         api:
             pattern: ^/api
             stateless: true
+            provider: app_user_uuid_provider
             jwt: ~
 
         main:
@@ -39,6 +50,10 @@ security:
                 login_path: app_login
                 check_path: app_login
                 enable_csrf: true
+            # Brute-force protection: max 5 failed attempts per (IP + username) / 15 min
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 604800 # 1 week

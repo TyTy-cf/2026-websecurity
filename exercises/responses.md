@@ -66,3 +66,36 @@
 4. Le commentaire a disparu, la suppression a fonctionné.
 5. Le commentaire disparait aussi, la route est public !
 6. La route n'est pas sécurisée dans le firewall, il n'y a pas de Voter sur Comment pour valider que l'utilisateur est bien propriétaire, la route est en GET alors qu'elle devrait être en DELETE.
+7. Envoi d'un mail avec le lien de suppression
+8. Mise en place d'un formulaire post pour gérer le bouton et un crsf token en hidden, modifier la route en post, valider le token dans le contrôler, ajout d'un voter pour vérifier les droits, et sécurisé les route de suppression pour la rendre authentifiée.
+9. La page piège ne supprime plus le commentaire.
+
+## Exercice 8
+
+1. Des headers, un payload et une signature
+2. Le mail et les rôles
+3. J'ai réussis à me connecter comme admin en changeant le username et le rôle, mais pas le role seul.
+4. le mail peut permettre au pirate de faire du brut force sur d'autres sites
+5. Le PHPSESSID est juste un identifiant pour retrouver des données côté serveur donc on ne peut rien apprendre en le décodant.
+6. Passage du username avec un uid par utilisateur
+7. Non. Le rôle n'a pas besoin de figurer dans le jeton pour que l'application fonctionne. Le firewall `api` recharge l'utilisateur depuis la base via le user provider (`app_user_provider`, entité `User`), et l'autorisation s'appuie sur `User::getRoles()` lu en base : le claim `roles` du token n'est jamais utilisé pour accorder ou refuser un accès. Il est donc redondant, et même trompeur (on croit contrôler ses droits en le modifiant, alors qu'il est ignoré). En prime, l'exposer révèle inutilement le niveau de privilège de l'utilisateur dans un payload décodable. On peut donc le retirer sans aucun impact fonctionnel.
+
+## Exercice 9
+
+1. Aucune différence, pas de blocage, pas de message différent.
+2. Idem
+3. Brute force jusqu'à trouver le mot de passe correspondant à l'email. Le mot de passe peut être trouvé en quelques secondes à quelques minutes : sans limitation, un script enchaîne les tentatives au rythme des requêtes HTTP (des dizaines à des centaines par seconde), et 10 000 essais est un volume négligeable. Le seul frein réel est le coût de hachage (`password_hashers: auto`, bcrypt/argon2id), mais il est parallélisable et ne change pas l'ordre de grandeur. C'est précisément ce qui justifie un login throttling.
+4. La fonctionnalité est le login_throttling
+5. Installation de symfony/rate_limiter, puis config sur les firewalls de 5 tentatives en 15 mn et listener pour transformer la 401 en 429.
+6. 5 tentatives, code 429 avec le message Trop de tentatives de connexion échouées, veuillez réessayer dans 14 minutes.
+7. Ok, l'utilisateur peut se connecter du premier coup
+8. Une fois le seuil atteint il faut attendre le temps indiqué dans le message.
+9. Bundle symfony/rate_limiter avec la config de login_throttling: max_attempts: 5 interval: '15 minutes', sur chaque firewall dans security.yaml et un handler pour renvoyer une 429 à la place de la 401 par défaut.
+
+## Exercice 10
+
+1. Aucune limite
+2. Aucune limite aussi
+3. OK
+4. OK
+5. Oui c'est tout bon.

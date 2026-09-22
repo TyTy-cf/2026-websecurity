@@ -5,6 +5,12 @@
 {% block body %}
     <h1 class="h3 mb-3 font-weight-normal mt-3">{{ 'register.heading'|trans }}</h1>
 
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }}">{{ message|trans }}</div>
+        {% endfor %}
+    {% endfor %}
+
     {{ form_start(registrationForm) }}
         {{ form_row(registrationForm.email) }}
         {{ form_row(registrationForm.nickname) }}

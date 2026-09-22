@@ -17,6 +17,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_USER_UUID', fields: ['uuid'])]
 #[UniqueEntity(fields: ['email'], message: 'Cette adresse e-mail est déjà utilisée.')]
 #[ApiResource(
     operations: [
@@ -35,6 +36,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     #[Groups(['user:read'])]
     private ?int $id = null;
+
+    /**
+     * Public, opaque identifier used to reference the user (e.g. in the JWT payload)
+     * without exposing personal data (email) nor a guessable value (sequential id).
+     */
+    #[ORM\Column(length: 36)]
+    private ?string $uuid = null;
 
     #[ORM\Column(length: 180)]
     #[Groups(['user:read'])]
@@ -83,11 +91,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->topics = new ArrayCollection();
         $this->comments = new ArrayCollection();
+        $this->uuid = self::generateUuidV4();
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    /**
+     * Generate a random (version 4) UUID string, without pulling in an extra dependency.
+     * Random-based, so it leaks no personal data and is not enumerable.
+     */
+    private static function generateUuidV4(): string
+    {
+        $data = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40); // version 4
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80); // variant RFC 4122
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 
     public function getEmail(): ?string

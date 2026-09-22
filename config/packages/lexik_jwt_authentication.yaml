@@ -2,3 +2,7 @@ lexik_jwt_authentication:
     secret_key: '%env(resolve:JWT_SECRET_KEY)%'
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
+    # Identify the user by an opaque uuid instead of the email:
+    # the payload no longer exposes personal data, and the value is not guessable.
+    # This is both the payload claim name and the field used to reload the user.
+    user_id_claim: uuid

@@ -66,10 +66,13 @@ class SecurityController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword($passwordHasher->hashPassword($user, $form->get('plainPassword')->getData()))
+            $user->setPassword($passwordHasher->hashPassword($user, $user->getPlainPassword()))
                 ->setRoles([])
                 ->setCreatedAt(new \DateTime())
                 ->setActivationCode(bin2hex(random_bytes(16)));
+
+            // Exercice 14 — une fois haché, on garde pas le clair en mémoire
+            $user->setPlainPassword(null);
 
             $entityManager->persist($user);
             $entityManager->flush();

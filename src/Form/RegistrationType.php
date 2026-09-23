@@ -40,7 +40,6 @@ class RegistrationType extends AbstractType
             ])
             ->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
-                'mapped' => false,
                 'first_options' => [
                     'label' => 'register.password_label',
                     'attr' => ['class' => 'form-control'],
@@ -49,10 +48,9 @@ class RegistrationType extends AbstractType
                     'label' => 'register.password_confirm_label',
                     'attr' => ['class' => 'form-control'],
                 ],
+                // Exercice 14 — plus de contrainte ici : la règle est sur l'entité,
+                // comme ça elle s'applique même si le mot de passe arrive par ailleurs
                 'invalid_message' => 'Les mots de passe ne correspondent pas.',
-                'constraints' => [
-                    new NotBlank(),
-                ],
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'register.submit',

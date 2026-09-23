@@ -1076,3 +1076,248 @@ Aucun de ces paquets n'était vulnérable quand le code a été écrit : ils le 
 qu'une seule ligne de mon code ne change. La sécurité d'un projet n'est donc pas un état
 qu'on atteint une fois, c'est quelque chose qui se re-vérifie dans le temps. D'où l'intérêt
 d'automatiser l'audit plutôt que d'y penser à la main.
+
+
+# Exercice 14 — Politique de mot de passe
+
+## Question 1 — Le mot de passe le plus court possible
+
+Je m'inscris avec le mot de passe `1`. Le compte est créé (redirection 302). Donc la
+longueur minimale réellement acceptée aujourd'hui, c'est **un caractère**.
+
+Et il est utilisable tout de suite : je me connecte avec `1` et je suis redirigée vers
+l'accueil.
+
+```
+inscription avec « 1 »  -> HTTP 302 (compte créé)
+connexion avec « 1 »    -> redirige vers /  (connectée)
+```
+
+Au passage j'ai remarqué autre chose : l'inscription envoie un mail d'activation, mais
+rien ne vérifie que le compte a été activé avant de laisser se connecter. Il n'y a aucun
+`UserChecker` ni `user_checker` dans `security.yaml`. Le mail d'activation est donc
+décoratif : le compte marche avant même qu'on ait cliqué dessus.
+
+## Question 2 — Où le mot de passe est validé
+
+La règle est dans `src/Form/RegistrationType.php`, sur le champ `plainPassword` :
+
+```php
+->add('plainPassword', RepeatedType::class, [
+    'mapped' => false,
+    'constraints' => [
+        new NotBlank(),
+    ],
+])
+```
+
+`NotBlank()`, c'est tout. Aucune longueur, aucune vérification. D'où le résultat de la
+question 1.
+
+Il faut bien séparer les deux sujets :
+
+- **le stockage est correct.** `security.yaml` utilise `password_hashers: 'auto'`, et le
+  contrôleur hache avant d'enregistrer. Rien n'est stocké en clair. L'entité va même plus
+  loin : `__serialize()` remplace le hash par un CRC32C pour qu'il ne traîne pas en session.
+- **la qualité, elle, n'est pas contrôlée du tout.** C'est ça le vrai sujet de l'exercice.
+
+## Question 3 — Définir la politique
+
+Mon intuition de départ c'était « une majuscule, un chiffre, un caractère spécial ».
+Après avoir cherché, c'est justement ce qu'il ne faut plus faire.
+
+Le contre-exemple qui m'a convaincue : `Password1!` respecte les trois règles, et il est
+dans le top 100 de tous les dictionnaires de cassage. Le problème, c'est que les humains
+répondent aux règles de façon prévisible — majuscule au début, chiffre à la fin,
+caractère spécial `!`. L'attaquant le sait et adapte son dictionnaire. On embête
+l'utilisateur sans agrandir l'espace de recherche.
+
+**Le NIST** (SP 800-63B révision 4, juillet 2025) demande 15 caractères minimum quand le
+mot de passe est le seul facteur, de supporter jusqu'à 64 caractères, et **interdit**
+d'imposer des règles de composition ainsi que le changement périodique forcé. Il rend en
+revanche obligatoire la vérification contre une liste de mots de passe compromis.
+
+**La CNIL** (délibération 2022-100) raisonne en entropie et pas en classes de caractères.
+Trois cas : 80 bits si le mot de passe est seul, **50 bits s'il y a une restriction
+d'accès**, 13 bits avec du matériel dédié.
+
+C'est ce cas du milieu qui me concerne : j'ai mis en place le login throttling à
+l'exercice 9. La CNIL reconnaît explicitement qu'une protection contre le brute-force
+permet d'être moins exigeant avec l'utilisateur. 50 bits, ça correspond à peu près à
+12 caractères variés, ou une phrase de 4-5 mots.
+
+La politique que je retiens :
+
+| Règle | Valeur |
+|---|---|
+| Longueur minimale | 12 caractères |
+| Longueur maximale | 4096 (ne jamais tronquer) |
+| Règles de composition | aucune |
+| Force réelle mesurée | `PasswordStrength`, score moyen |
+| Mots de passe fuités | `NotCompromisedPassword` |
+
+## Question 4 — Les autres portes d'entrée
+
+J'ai cherché tous les endroits où un mot de passe peut entrer :
+
+```
+src/Form/RegistrationType.php      le formulaire d'inscription
+src/Controller/SecurityController.php:69   hashPassword() puis setPassword()
+src/Repository/UserRepository.php:31       upgradePassword()  <- re-hachage au login
+src/Entity/User.php                ApiResource, mais GET /user/me uniquement
+```
+
+Pas de CRUD admin utilisateur, pas de fixtures, pas de commande console, aucune opération
+API en écriture. Le `upgradePassword()` reçoit un hash déjà calculé, ce n'est pas un point
+d'entrée de politique.
+
+Donc aujourd'hui, oui, le formulaire est la seule porte. **Mais ce n'est pas la question.**
+
+Ce qui compte, c'est que la règle vit dans un *formulaire*, sur un champ `mapped => false`
+qui ne touche même pas l'entité. C'est la couche présentation. Le jour où on ajoute un
+« mot de passe oublié », un back-office ou une commande `app:create-user`, aucun ne passera
+par `RegistrationType` : la politique sera contournée, et silencieusement. Pas d'erreur,
+juste un compte avec `123`.
+
+C'est exactement la leçon de l'exercice 5. Le bouton « Edit » caché dans le template ne
+protégeait rien parce que l'URL restait accessible ; j'avais déplacé le contrôle vers le
+contrôleur, c'est-à-dire vers la ressource. Ici c'est le même réflexe : **la règle doit
+descendre au niveau de la donnée**.
+
+La difficulté propre au mot de passe, c'est qu'on ne peut pas mettre la contrainte sur
+`User::$password` : cette propriété contient le **hash**. Valider « au moins 12 caractères »
+sur un hash n'a aucun sens, il fait toujours 60 caractères. Le clair n'existe que le temps
+de la requête et n'atteint jamais l'entité.
+
+## Question 5 — Le correctif
+
+Deux pièces.
+
+**1. Une contrainte composée**, dans `src/Validator/StrongPassword.php`. Symfony fournit
+`Compound` exactement pour ça : regrouper plusieurs contraintes sous un seul attribut.
+
+```php
+#[\Attribute]
+class StrongPassword extends Compound
+{
+    protected function getConstraints(array $options): array
+    {
+        return [
+            new Assert\NotBlank(...),
+            new Assert\Length(min: 12, max: 4096, ...),
+            new Assert\PasswordStrength(minScore: Assert\PasswordStrength::STRENGTH_MEDIUM, ...),
+            new Assert\NotCompromisedPassword(...),
+        ];
+    }
+}
+```
+
+La politique est écrite à un seul endroit. Un futur formulaire de réinitialisation met
+`#[StrongPassword]` et hérite de tout, y compris des évolutions futures.
+
+`NotCompromisedPassword` interroge *Have I Been Pwned* en k-anonymat : seuls les 5 premiers
+caractères du SHA-1 partent, le mot de passe ne quitte jamais le serveur.
+
+**2. Une propriété non persistée sur l'entité**, qui porte le clair le temps de la requête :
+
+```php
+#[StrongPassword]
+private ?string $plainPassword = null;
+```
+
+Pas de `#[ORM\Column]`, elle ne touche jamais la base. Et j'ai ajouté une ligne dans
+`__serialize()` pour que ce clair ne parte jamais en session :
+
+```php
+unset($data["\0".self::class."\0plainPassword"]);
+```
+
+Ensuite le formulaire devient un simple champ mappé, sans contrainte, et le contrôleur lit
+`$user->getPlainPassword()` puis le remet à `null` après hachage.
+
+**Un bug que j'ai trouvé en route.** `RepeatedType` force `error_bubbling: false` : les
+violations restent sur le nœud parent, jamais sur `.first` / `.second`. Or le template ne
+rendait que les deux enfants. Résultat, le `NotBlank()` existant et le message « Les mots de
+passe ne correspondent pas. » étaient **déjà avalés en silence** depuis le début. Il a fallu
+ajouter dans `register.html.twig` :
+
+```twig
+{{ form_errors(registrationForm.plainPassword) }}
+```
+
+Sans ça mes quatre contraintes se seraient appliquées sans que l'utilisateur voie jamais
+pourquoi son inscription échoue.
+
+## Question 6 — Revalider
+
+```
+"1"                      HTTP 422  trop court + trop devinable + fuité
+"Azerty1"                HTTP 422  trop court + trop devinable + fuité
+"motdepassemotdepasse"   HTTP 422  trop devinable + fuité
+"Azertyuiop123456"       HTTP 422  fuité
+"girafe-turquoise-..."   HTTP 302  accepté, et la connexion marche
+```
+
+Le cas intéressant c'est `Azertyuiop123456`. Il fait 16 caractères, donc il passe la
+longueur. Il passe aussi `PasswordStrength`. **Il n'est attrapé que par la vérification
+des fuites.** C'est la démonstration que la longueur seule ne suffit pas : un mot de passe
+peut être long, varié, et pourtant connu de tous les attaquants parce qu'il a déjà fuité.
+
+Les messages sont compréhensibles et disent quoi faire, pas juste « mot de passe invalide » :
+
+> Votre mot de passe doit faire au moins 12 caractères. Une phrase facile à retenir fait
+> très bien l'affaire.
+
+Et surtout, j'ai vérifié que la règle ne dépend plus du formulaire. En validant un `User`
+construit à la main, sans contrôleur ni formulaire :
+
+```
+"1"                       3 violation(s)
+"Azertyuiop123456"        1 violation(s)
+"girafe-turquoise-..."    0 violation(s)
+```
+
+C'est ça la vraie réponse à la question 5 : la politique est sur la donnée, donc n'importe
+quelle porte d'entrée en hérite.
+
+## Question 7 — Prendre du recul
+
+Non, une politique stricte ne suffit pas. Elle réduit la probabilité qu'un mot de passe
+soit deviné, mais elle ne fait que ça.
+
+Plusieurs mesures déjà vues dans le parcours agissent sur le même risque :
+
+- le **login throttling** (exercice 9) rend le brute-force impraticable, quelle que soit la
+  qualité du mot de passe
+- le **hachage** (`password_hashers: auto`) fait qu'une fuite de la base ne donne pas les
+  mots de passe en clair
+- le **cookie `httponly` + `secure`** (exercice 1) et la correction des **XSS** (exercices
+  2 à 4) empêchent de voler la session sans connaître le mot de passe
+- les **en-têtes de sécurité** (exercice 6) limitent les dégâts si une faille passe
+
+Mais toutes ces mesures ont la même limite : **si l'attaquant connaît le mot de passe, il
+entre**. Phishing, fuite chez un autre site où l'utilisateur a réutilisé le même mot de
+passe, keylogger — dans tous ces cas la politique n'a servi à rien.
+
+La seule mesure qui protège même quand le mot de passe est connu, c'est
+l'**authentification à deux facteurs**. C'est le seul mécanisme qui ajoute quelque chose que
+l'attaquant n'a pas : un appareil physique. C'est d'ailleurs pour ça que le NIST autorise
+de descendre à 8 caractères quand il y a du MFA, contre 15 sans.
+
+## Ce que j'en retiens
+
+Le réflexe « majuscule + chiffre + caractère spécial » est resté dans toutes les têtes alors
+que les deux référentiels l'ont abandonné. Ce qui compte vraiment c'est la longueur, et
+surtout de refuser ce qui a déjà fuité — parce qu'un mot de passe fuité est cassé en une
+requête, peu importe à quel point il a l'air solide.
+
+Et comme à l'exercice 5, le vrai sujet n'était pas la règle elle-même mais **où on la pose**.
+Une contrainte sur un formulaire protège ce formulaire ; une contrainte sur la donnée protège
+l'application. Une règle qu'on peut contourner en empruntant une autre porte n'est pas une
+règle de sécurité, c'est une suggestion.
+
+Un arbitrage que j'ai dû trancher : `NotCompromisedPassword` a `skipOnError: false` par
+défaut, donc si l'API de Have I Been Pwned est injoignable, l'inscription échoue au lieu de
+laisser passer. J'ai gardé ce comportement parce qu'il est le plus sûr, mais ça veut dire
+qu'une panne d'un service externe bloque les inscriptions. C'est un vrai compromis entre
+sécurité et disponibilité, et le bon choix dépend du contexte.

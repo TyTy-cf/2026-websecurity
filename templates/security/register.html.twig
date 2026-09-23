@@ -8,6 +8,9 @@
     {{ form_start(registrationForm) }}
         {{ form_row(registrationForm.email) }}
         {{ form_row(registrationForm.nickname) }}
+        {# Exercice 14 — RepeatedType garde ses erreurs sur le noeud parent, sans ça
+           les messages sur le mot de passe ne s'affichent jamais #}
+        {{ form_errors(registrationForm.plainPassword) }}
         {{ form_row(registrationForm.plainPassword.first) }}
         {{ form_row(registrationForm.plainPassword.second) }}
         {{ form_widget(registrationForm.submit) }}

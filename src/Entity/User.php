@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use App\Repository\UserRepository;
 use App\State\CurrentUserProvider;
+use App\Validator\StrongPassword;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -57,6 +58,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
+
+    // Exercice 14 — le mot de passe en clair, jamais stocké : il vit juste le temps de
+    // la requête. C'est lui qu'on valide, pas le hash au-dessus qui fait toujours la
+    // même longueur. En le mettant ici, la règle s'applique à n'importe quel point
+    // d'entrée qui valide un User, pas seulement au formulaire d'inscription.
+    #[StrongPassword]
+    private ?string $plainPassword = null;
 
     #[ORM\Column(length: 164)]
     #[Groups(['user:read'])]
@@ -163,6 +171,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
+
     /**
      * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
      */
@@ -170,6 +190,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $data = (array) $this;
         $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+        // Exercice 14 — le clair ne doit surtout pas finir dans la session
+        unset($data["\0".self::class."\0plainPassword"]);
 
         return $data;
     }

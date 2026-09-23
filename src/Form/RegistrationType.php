@@ -12,7 +12,9 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 
 class RegistrationType extends AbstractType
 {
@@ -51,7 +53,27 @@ class RegistrationType extends AbstractType
                 ],
                 'invalid_message' => 'Les mots de passe ne correspondent pas.',
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank(
+                        message: 'Le mot de passe est obligatoire.',),
+                    new Length(min: 12,
+                        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.'
+                    ),
+                    new Regex(
+                        pattern: '/[a-z]/',
+                        message: 'Le mot de passe doit contenir au moins une lettre minuscule.',
+                    ),
+                    new Regex(
+                        pattern: '/[A-Z]/',
+                        message: 'Le mot de passe doit contenir au moins une lettre majuscule.',
+                    ),
+                    new Regex(
+                        pattern: '/[0-9]/',
+                        message: 'Le mot de passe doit contenir au moins un chiffre.',
+                    ),
+                    new Regex(
+                        pattern: '/[^a-zA-Z0-9]/',
+                        message: 'Le mot de passe doit contenir au moins un caractère spécial.',
+                    ),
                 ],
             ])
             ->add('submit', SubmitType::class, [
@@ -59,8 +81,7 @@ class RegistrationType extends AbstractType
                 'attr' => [
                     'class' => 'btn btn-success mt-2',
                 ],
-            ])
-        ;
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

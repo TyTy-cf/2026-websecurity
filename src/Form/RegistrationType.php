@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\User;
+use App\Validator\PasswordPolicy;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
@@ -40,14 +41,20 @@ class RegistrationType extends AbstractType
             ])
             ->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
-                'mapped' => false,
                 'first_options' => [
                     'label' => 'register.password_label',
-                    'attr' => ['class' => 'form-control'],
+                    'attr' => [
+                        'class' => 'form-control',
+                        'autocomplete' => 'new-password',
+                        'minlength' => PasswordPolicy::MIN_LENGTH,
+                    ],
                 ],
                 'second_options' => [
                     'label' => 'register.password_confirm_label',
-                    'attr' => ['class' => 'form-control'],
+                    'attr' => [
+                        'class' => 'form-control',
+                        'autocomplete' => 'new-password',
+                    ],
                 ],
                 'invalid_message' => 'Les mots de passe ne correspondent pas.',
                 'constraints' => [

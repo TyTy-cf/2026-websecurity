@@ -141,4 +141,48 @@ Exo 12.1
 
 Exo 12.2
 
+1. tous les types de fichiers / déposé dans /uploads/topic/image-1.jpg?r=151
+4. https://localhost:8443/uploads/topic/image-2.php?cmd=cat%20../../../.env.local
+5. il a accès à un terminal sur le serveur donc il peut éventuellement récupérer des fichiers, se connecter à la bdd,
+   drop des fichiers, ajouter des utilisateurs pour connexion au serveur etc
 
+Exo 13
+
+1. composer audit / symfony check:security
+2. mise a jour composer update symfony/* et twig/* et suppression paquets abandonnés qui peuvent devenir vulnérables
+3. version reference dates
+4. pas dans l'immédiat mais peux le devenir vu qu'il n'y aura pas de maj de sécurité, le mieux est de trouver un 
+   remplacement et/ou le supprimer
+5. mise en place de pipeline CI
+6. toujours rester à jour des packages
+
+Exo 14
+
+1. 1 et oui utilisable
+2. NotBlank()/RepeatedType/seulement required cote front, aucun minlength ni pattern
+le mot de passe passe par UserPasswordHasherInterface::hashPassword(), avec algorithm: auto dans security.yaml
+3. 14-16 chars avec majuscule, minuscule, un chiffre, un caractère spécial et une double authentification
+
+La CNIL ne fixe pas de règle unique : elle raisonne en entropie, c'est-à-dire en difficulté à deviner le mot de passe, et adapte l'exigence au contexte.
+
+- Mot de passe seul, sans mesure complémentaire : 80 bits minimum. Trois exemples équivalents :
+    - 12 caractères mêlant majuscules, minuscules, chiffres et caractères spéciaux ;
+    - 14 caractères mêlant majuscules, minuscules et chiffres, sans caractère spécial obligatoire ;
+    - une phrase de passe d'au moins 7 mots.
+- Mot de passe avec restriction d'accès au compte (temporisation après les échecs, blocage au-delà d'un certain nombre de tentatives, captcha) : 50 bits minimum. Exemple : 8 caractères utilisant 3 des 4 catégories.
+- Mot de passe associé à un matériel détenu par l'utilisateur, comme un code de carte bancaire : 13 bits, avec blocage après 3 échecs.
+- Plus de changement périodique pour les comptes standards. Il reste de mise pour les comptes administrateurs.
+
+Confrontation des deux sources
+
+Faut-il imposer « une majuscule, un chiffre, un caractère spécial » ? Non.
+
+- NIST : il l'interdit explicitement.
+- CNIL : la composition n'est qu'un des moyens d'atteindre l'entropie visée, pas une obligation. Les options « 14 caractères sans caractère spécial » et « 7 mots » sont aussi valables.
+- Le point commun : la longueur compte plus que la variété de caractères. cheval correct agrafe balus facile à retenir que P@ssw0rd!.
+
+La vraie différence entre les deux porte sur la liste de mots de passe interdits. Le NIST l'imposeas dans les passages de la CNIL que j'ai consultés. C'est pourtant ce qui arrête concrètementAzerty123!, qu'un calcul d'entropie basé sur la composition juge correct.
+
+4. form de connexion aussi et api => il faut poser la règle globalement
+7. Non. Elle ne traite qu'une partie du risque : un mot de passe deviné. Un mot de passe peut aussi être volé : 
+   hameçonnage, logiciel espion, réutilisation d'un mot de passe ayant fuité ailleurs, fuite de la base. Contre un vol, sa qualité n'y change rien.

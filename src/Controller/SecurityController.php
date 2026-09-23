@@ -13,7 +13,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -46,7 +45,6 @@ class SecurityController extends AbstractController
     public function register(
         Request $request,
         EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher,
         #[Autowire(service: 'limiter.registration')]
         RateLimiterFactory $anonymousApiLimiter,
         MailerInterface $mailer,
@@ -87,8 +85,7 @@ class SecurityController extends AbstractController
                 return $this->redirectToRoute('app_login');
             }
 
-            $user->setPassword($passwordHasher->hashPassword($user, $form->get('plainPassword')->getData()))
-                ->setRoles([])
+            $user->setRoles([])
                 ->setCreatedAt(new \DateTime())
                 ->setActivationCode(bin2hex(random_bytes(16)));
 

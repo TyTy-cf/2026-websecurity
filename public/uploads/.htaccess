@@ -1,0 +1,13 @@
+# Accès direct interdit : les images sont servies par la route app_image_show
+Require all denied
+
+# Défense en profondeur : aucun script ne doit être exécuté depuis ce dossier
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+Options -ExecCGI -Indexes
+RemoveHandler .php .phtml .phar .cgi .pl .py .sh
+RemoveType .php .phtml .phar

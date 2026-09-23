@@ -20,7 +20,7 @@
                     <a href="{{ path('app_category_show', { id: topic.category.id }) }}">{{ topic.category.name }}</a> &middot; {{ 'common.posted_by'|trans({'%author%': topic.author.nickname, '%date%': topic.createdAt|date('d/m/Y')}) }}
                 </h6>
                 <div class="d-flex">
-                    <img class="img-fluid mx-auto" src="{{ topic.picture ~ '?r=' ~ topic.id }}" alt="Topic {{ topic.id }}">
+                    <img class="img-fluid mx-auto" src="{{ path('app_image_show', { directory: 'topic', filename: topic.picture|split('/')|last }) }}" alt="Topic {{ topic.id }}">
                 </div>
                 <p class="card-text">
                     {{ topic.content|slice(0, 200) }}{% if topic.content|length > 200 %}&hellip;{% endif %}

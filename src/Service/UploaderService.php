@@ -2,8 +2,10 @@
 
 namespace App\Service;
 
+use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Uid\Uuid;
 
 readonly class UploaderService
 {
@@ -15,10 +17,14 @@ readonly class UploaderService
 
     public function upload(UploadedFile $file, string $directory): string
     {
+        $extension = $file->guessExtension();
+
+        if (!in_array($extension, ['jpg', 'jpeg', 'png'], true)) {
+            throw new InvalidArgumentException('Extension invalide : ' . $extension);
+        }
         $targetDir = $this->uploadDir . '/' . $directory;
 
-        $count = count(glob($targetDir . '/image-*')) + 1;
-        $filename = 'image-' . $count . '.' . $file->getClientOriginalExtension();
+        $filename = Uuid::v4() . '.' . $extension;
 
         $file->move($targetDir, $filename);
 

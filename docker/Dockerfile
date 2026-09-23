@@ -52,6 +52,7 @@ RUN /user_entry_point.sh ${USER_ID} ${GROUP_ID}
 # de /var/www/html (ex: xdebug ci-dessus). zzz- garantit qu'il est chargé après
 # tous les autres conf.d/*.ini (ordre alphabétique).
 COPY docker/security.ini /usr/local/etc/php/conf.d/zzz-security.ini
+COPY docker/php-fpm-security.conf /usr/local/etc/php-fpm.d/zzz-security.conf
 
 #switch to the good user
 USER ${USER_ID}:${GROUP_ID}

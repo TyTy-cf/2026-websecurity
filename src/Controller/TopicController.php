@@ -71,6 +71,7 @@ final class TopicController extends AbstractController
     }
 
     #[Route('/sujet/nouveau', name: 'app_topic_new')]
+    #[IsGranted('add')]
     public function new(
         Request $request,
         EntityManagerInterface $entityManager,

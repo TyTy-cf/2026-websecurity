@@ -12,9 +12,14 @@ class TopicVoter extends Voter
 {
     const VIEW = 'view';
     const EDIT = 'edit';
+    const ADD = 'add';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
+        if (self::ADD === $attribute) {
+            return true;
+        }
+
         if (!in_array($attribute, [self::VIEW, self::EDIT])) {
             return false;
         }
@@ -34,6 +39,7 @@ class TopicVoter extends Voter
         return match($attribute) {
             self::VIEW => $this->canView(),
             self::EDIT => $this->canEdit($topic, $token, $vote),
+            self::ADD => $this->canAdd($token, $vote),
             default => throw new \LogicException('This code should not be reached!')
         };
     }
@@ -62,5 +68,17 @@ class TopicVoter extends Voter
         ));
 
         return false;
+    }
+
+    private function canAdd(TokenInterface $token, ?Vote $vote = null): bool
+    {
+        $user = $token->getUser();
+
+        if (!$user instanceof User) {
+            $vote?->addReason('The user is not logged in.');
+            return false;
+        }
+
+        return true;
     }
 }

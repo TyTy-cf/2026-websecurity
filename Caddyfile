@@ -1,6 +1,9 @@
 https://localhost:8443 {
     tls internal
     root * /var/www/html/public
+
+    # Accès direct interdit : les images sont servies par la route app_image_show
+    respond /uploads/* 403
     file_server
     php_fastcgi php:9000
 }

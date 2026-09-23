@@ -12,6 +12,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 class TopicType extends AbstractType
@@ -54,6 +55,11 @@ class TopicType extends AbstractType
                 'mapped' => false,
                 'required' => $options['isNew'],
                 'help' => $options['isNew'] ? null : 'form.topic_picture_help',
+                'constraints' => [
+                    new File(
+                        extensions: ['jpg', 'jpeg', 'png'],
+                    ),
+                ],
                 'attr' => [
                     'class' => 'form-control',
                 ],

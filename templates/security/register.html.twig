@@ -9,6 +9,17 @@
         {{ form_row(registrationForm.email) }}
         {{ form_row(registrationForm.nickname) }}
         {{ form_row(registrationForm.plainPassword.first) }}
+
+        {# Indicateur de robustesse (JS, cohérent avec la contrainte PasswordStrength serveur) #}
+        <div class="mt-2 mb-3" id="password-strength" hidden aria-live="polite">
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar" role="progressbar"
+                     style="width: 0%; transition: width .2s ease, background-color .2s ease;"
+                     aria-valuemin="0" aria-valuemax="4" aria-valuenow="0"></div>
+            </div>
+            <small class="form-text text-muted js-strength-label"></small>
+        </div>
+
         {{ form_row(registrationForm.plainPassword.second) }}
         {{ form_widget(registrationForm.submit) }}
     {{ form_end(registrationForm) }}
@@ -16,4 +27,9 @@
     <p class="mt-3">
         <a href="{{ path('app_login') }}">{{ 'register.has_account'|trans }}</a>
     </p>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('password-strength') }}
 {% endblock %}

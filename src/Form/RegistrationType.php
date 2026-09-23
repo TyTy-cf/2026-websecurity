@@ -12,7 +12,10 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
+use Symfony\Component\Validator\Constraints\PasswordStrength;
 
 class RegistrationType extends AbstractType
 {
@@ -43,15 +46,27 @@ class RegistrationType extends AbstractType
                 'mapped' => false,
                 'first_options' => [
                     'label' => 'register.password_label',
-                    'attr' => ['class' => 'form-control'],
+                    'attr' => ['class' => 'form-control', 'autocomplete' => 'new-password'],
                 ],
                 'second_options' => [
                     'label' => 'register.password_confirm_label',
-                    'attr' => ['class' => 'form-control'],
+                    'attr' => ['class' => 'form-control', 'autocomplete' => 'new-password'],
                 ],
                 'invalid_message' => 'Les mots de passe ne correspondent pas.',
                 'constraints' => [
-                    new NotBlank(),
+                    new NotBlank(message: 'Veuillez saisir un mot de passe.'),
+                    new Length(
+                        min: 12,
+                        max: 4096,
+                        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.',
+                    ),
+                    new PasswordStrength(
+                        minScore: PasswordStrength::STRENGTH_STRONG,
+                        message: 'Ce mot de passe est trop faible, choisissez-en un plus robuste.',
+                    ),
+                    new NotCompromisedPassword(
+                        message: 'Ce mot de passe a été exposé lors d\'une fuite de données, choisissez-en un autre.',
+                    ),
                 ],
             ])
             ->add('submit', SubmitType::class, [

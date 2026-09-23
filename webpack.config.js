@@ -21,6 +21,7 @@ Encore
      * and one CSS file (e.g. app.css) if your JavaScript imports CSS.
      */
     .addEntry('scripts', './assets/scripts/app.ts')
+    .addEntry('password-strength', './assets/scripts/password-strength.ts')
     .addEntry('styles', './assets/styles/app.css')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.

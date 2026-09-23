@@ -158,7 +158,29 @@
 
 ## Exercice 14
 
-1. On peut mettre un mot de passe de 1 caractère
-2. En base le mot de passe est hashé, et on a juste un NotBlank sur le formtype
-3. Au moins 12 caractères, un chiffre, une majuscule, une minuscule et un caractère spécial.
-4. Il 
+1. On peut mettre un mot de passe de 1 caractère. Le compte est créé et, une fois activé via le mail, il est utilisable pour se connecter.
+2. La validation se fait uniquement dans `RegistrationType` (champ `plainPassword`, `mapped: false`) avec une seule règle : `NotBlank`. Il faut distinguer deux choses :
+   - **Stockage** : c'est correct. `SecurityController::register()` hache le mot de passe avec `UserPasswordHasherInterface`, et `password_hashers: auto` choisit bcrypt ou argon2id. En base il n'y a qu'un hash salé. `UserRepository::upgradePassword()` permet de re-hacher automatiquement le mot de passe si l'algorithme évolue.
+   - **Qualité** : aucune règle. Un bon hachage ne protège pas un mot de passe `a` ou `123456`, qui tombe dès les premiers essais d'un brute force ou d'un dictionnaire.
+3. Au départ, mon intuition était : au moins 12 caractères, un chiffre, une majuscule, une minuscule et un caractère spécial. Les références vont plus loin et nuancent l'idée de composition :
+   - **CNIL** (recommandation 2022) : elle raisonne en **entropie**, 80 bits minimum si le mot de passe est le seul facteur. Par exemple 12 caractères mêlant les 4 types, ou 14 caractères sans contrainte de composition. Une phrase de passe convient aussi.
+   - **NIST SP 800-63B** : la **longueur** compte (15 caractères si le mot de passe est seul, 8 avec du MFA), il faut accepter au moins 64 caractères et tous les caractères (espaces, Unicode), et **ne pas imposer de règles de composition** ni de renouvellement périodique. En revanche il faut **refuser les mots de passe compromis** ou trop courants.
+   - Conclusion : imposer « une majuscule, un chiffre, un caractère spécial » pousse à des schémas prévisibles (`Azerty123!`) sans vraiment gagner en robustesse. La politique retenue est donc : **12 caractères minimum**, 4096 maximum (borne anti-DoS sur le hachage), une **robustesse mesurée** (`PasswordStrength`, niveau moyen, soit environ 80 bits d'entropie comme demandé par la CNIL), **pas de pseudo ni d'e-mail** dans le mot de passe, et un **refus des mots de passe présents dans une fuite** (`NotCompromisedPassword`).
+4. Aujourd'hui, le formulaire d'inscription est la seule porte d'entrée : l'API Platform n'expose que `GET /user/me`, et il n'y a ni changement ou réinitialisation de mot de passe, ni CRUD User dans l'admin, ni commande console, ni fixtures. Mais ces portes arrivent vite dans la vie d'un projet (mot de passe oublié, profil, `POST /api/users`, création d'un admin en CLI). Si la règle reste dans le FormType, chaque nouvelle porte devra la redéclarer, et il suffit d'en oublier une pour la contourner. La règle doit donc vivre au niveau du **modèle** (contrainte réutilisable appliquée à l'utilisateur), pas du formulaire.
+5. Correctif mis en place :
+   - Contraintes sur le mot de passe : `NotBlank`, `Length(min: 12, max: 4096)`, `PasswordStrength(minScore: STRENGTH_MEDIUM)`, un `Callback` qui refuse un mot de passe contenant le pseudo ou la partie locale de l'e-mail, et `NotCompromisedPassword` (API Have I Been Pwned en k-anonymity : seuls les 5 premiers caractères du SHA-1 sont envoyés). Tous les messages d'erreur sont en français.
+   - Les seuils sont déclarés en constantes (`PASSWORD_MIN_LENGTH`, `PASSWORD_MAX_LENGTH`, `PASSWORD_MIN_SCORE`) et réutilisés par le template.
+   - Côté front : `autocomplete="new-password"`, `minlength`/`maxlength`, un bouton « œil » pour afficher le mot de passe, et une aide dynamique sous le champ (jauge de robustesse et checklist des règles). Le score est calculé en JS avec le même algorithme que `PasswordStrengthValidator::estimateStrength()`, donc identique à celui du serveur. Ce n'est qu'un confort : c'est la validation serveur qui fait autorité.
+   - ⚠️ **Limite actuelle** : ces contraintes sont encore déclarées dans `RegistrationType`. Pour couvrir *toutes* les portes d'entrée, il reste à les regrouper dans une contrainte `Compound` (ex. `#[PasswordPolicy]`) posée sur une propriété `plainPassword` non persistée de `User`. Ainsi, tout formulaire, endpoint API ou commande qui valide un `User` appliquerait la même politique.
+6. Revalidation (soumission du formulaire côté serveur) :
+   - `a` est refusé : « Le mot de passe doit contenir au moins 12 caractères. » et « Le mot de passe est trop faible : allongez-le ou variez les types de caractères. »
+   - `motdepassemotdepasse` est refusé comme trop faible (peu de caractères différents, une seule classe). Il apparaît aussi 826 fois dans Have I Been Pwned.
+   - `Azertyuiop123456` passe la longueur et la robustesse, mais il apparaît **9 065 fois** dans Have I Been Pwned. `NotCompromisedPassword` le refuse donc : « Ce mot de passe apparaît dans une fuite de données connue, choisissez-en un autre. » C'est exactement le cas qu'une règle de composition seule laisserait passer. Note : la vérification est désactivée en environnement de test (`not_compromised_password: false` dans `validator.yaml`) pour ne pas appeler l'API pendant les tests.
+   - Un mot de passe contenant le pseudo est refusé. Une phrase de passe comme `Vélo-Nuage-Piment-47` est acceptée.
+   - Les messages sont compréhensibles, et l'aide dynamique montre avant l'envoi quelle règle n'est pas respectée.
+7. Non, une politique stricte ne suffit pas : elle ne protège ni du phishing, ni d'un keylogger, ni de la réutilisation du même mot de passe sur un autre site qui fuit. D'autres mesures déjà vues agissent sur le même risque :
+   - **Le hachage adaptatif** (bcrypt/argon2id) : en cas de fuite de la base, il ralentit le cassage hors ligne.
+   - **Le login throttling / rate limiter** (ex. 9) : il rend le brute force et le credential stuffing en ligne très lents.
+   - **L'anti-énumération des comptes** (ex. 11) : l'attaquant ne sait pas quels e-mails existent, ce qui l'empêche de cibler ses essais.
+   - **Le cookie de session sécurisé** (`HttpOnly`, `Secure`, `SameSite`, ex. 1) et la protection XSS : ils évitent de voler la session sans même connaître le mot de passe.
+   - La mesure qui protège **même si le mot de passe est connu de l'attaquant** est l'**authentification multifacteur (MFA / 2FA)** : TOTP, clé FIDO2, ou passkeys qui suppriment carrément le mot de passe. Sans le second facteur, le mot de passe seul ne suffit plus pour se connecter.

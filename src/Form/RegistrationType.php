@@ -40,7 +40,6 @@ class RegistrationType extends AbstractType
             ])
             ->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
-                'mapped' => false,
                 'first_options' => [
                     'label' => 'register.password_label',
                     'attr' => ['class' => 'form-control'],
@@ -50,9 +49,6 @@ class RegistrationType extends AbstractType
                     'attr' => ['class' => 'form-control'],
                 ],
                 'invalid_message' => 'Les mots de passe ne correspondent pas.',
-                'constraints' => [
-                    new NotBlank(),
-                ],
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'register.submit',

@@ -51,7 +51,8 @@ class SecurityController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword($passwordHasher->hashPassword($user, $form->get('plainPassword')->getData()))
+            $user->setPassword($passwordHasher->hashPassword($user, $user->getPlainPassword()))
+                ->setPlainPassword(null)
                 ->setRoles([])
                 ->setCreatedAt(new \DateTime())
                 ->setActivationCode(bin2hex(random_bytes(16)));

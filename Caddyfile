@@ -1,6 +1,13 @@
 https://localhost:8443 {
     tls internal
     root * /var/www/html/public
-    file_server
-    php_fastcgi php:9000
+
+    handle /uploads/* {
+        file_server
+    }
+
+    handle {
+        php_fastcgi php:9000
+        file_server
+    }
 }

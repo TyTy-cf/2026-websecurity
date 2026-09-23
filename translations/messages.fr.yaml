@@ -75,7 +75,6 @@ register:
 flash:
     login_required: Vous devez être connecté !
     comment_posted: Votre commentaire a été publié.
-    topic_created: Le sujet a été créé.
     topic_updated: Le sujet a été mis à jour.
     topic_created: Votre sujet a été publié.
     account_created: Votre compte a été créé, afin de finaliser votre inscription, validez le mail que vous avez reçu !

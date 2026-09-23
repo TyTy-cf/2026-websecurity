@@ -25,10 +25,6 @@ security:
         api_login:
             pattern: ^/api/login_check
             stateless: true
-            # Exercice 9 : limite les tentatives de connexion (brute-force) sur l'API.
-            login_throttling:
-                max_attempts: 5          # 5 échecs autorisés
-                interval: '15 minutes'   # sur une fenêtre de 15 minutes
             provider: app_user_provider
             # Exercice 9 : limite les tentatives de connexion (brute-force) sur l'API.
             login_throttling:

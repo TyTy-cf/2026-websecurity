@@ -59,3 +59,8 @@ node:
 
 l-node:
 	@docker compose logs node -f
+
+caddy:
+	@docker compose exec caddy sh
+
+

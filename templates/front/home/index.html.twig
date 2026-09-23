@@ -3,7 +3,12 @@
 {% block title %}{{ 'home.title'|trans }}{% endblock %}
 
 {% block body %}
-    <h1 class="my-4">{{ 'home.latest_topics'|trans }}</h1>
+    <div class="d-flex justify-content-around">
+        <h1 class="my-4">{{ 'home.latest_topics'|trans }}</h1>
+        <a href="{{ path('app_topic_new') }}" class="btn btn-secondary my-auto">
+            Nouveau sujet
+        </a>
+    </div>
 
     {% for topic in topics %}
         <div class="card mb-3 col-xl-6 col-md-8 col-12 mx-auto">

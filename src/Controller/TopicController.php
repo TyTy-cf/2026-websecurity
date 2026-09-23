@@ -111,12 +111,17 @@ final class TopicController extends AbstractController
         Topic $topic,
         Request $request,
         EntityManagerInterface $entityManager,
+        UploaderService $uploader,
     ): Response {
         $form = $this->createForm(TopicType::class, $topic, ['isNew' => false]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $topic->setUpdatedAt(new \DateTime());
+
+            if (null !== $picture = $form->get('picture')->getData()) {
+                $topic->setPicture($uploader->upload($picture, 'topic'));
+            }
 
             $entityManager->flush();
 

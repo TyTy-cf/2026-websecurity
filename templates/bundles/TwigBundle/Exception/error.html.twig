@@ -1,0 +1,11 @@
+{% extends 'front/base.html.twig' %}
+{% block body %}
+    <div class="container mt-4">
+        <h1>Oups !</h1>
+        <div class="alert alert-danger">{{ 'An error has occurred and the requested page cannot be displayed.'|trans }}</div>
+        <p>{{ 'We apologize for the inconvenience, if the problem persists, please'|trans }} <a href="{{ path('app_login') }}">{{ 'contact us.'|trans }}</a>.</p>
+        {% if is_granted('ROLE_ADMIN') %}
+            <pre>{{ status_code }} - {{ exception.message }}</pre>
+        {% endif %}
+    </div>
+{% endblock %}

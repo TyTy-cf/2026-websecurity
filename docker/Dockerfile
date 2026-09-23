@@ -34,6 +34,10 @@ FROM base AS dev
 RUN install-php-extensions xdebug
 COPY docker/xdebug.ini /usr/local/etc/php/conf.d/
 
+# PHP hardening (exercice 12.1) — copié APRÈS l'installation des extensions :
+# disable_functions désactive system()/exec(), or pecl/PEAR en a besoin pour compiler.
+COPY docker/security.ini /usr/local/etc/php/conf.d/
+
 # Install Symfony CLI
 RUN curl -sS https://get.symfony.com/cli/installer | bash && \
     mv /root/.symfony*/bin/symfony /usr/local/bin/symfony

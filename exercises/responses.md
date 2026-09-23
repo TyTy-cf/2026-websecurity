@@ -113,3 +113,9 @@
 
 ## Exercice 12
 
+1. x-powered-by PHP/8.2.33, visible depuis les headers de la réponse serveur.
+2. Il peut connaitre les failles de sécurités connues de cette version et les exploiter
+3. On a la version de PHP et le type de Serveur, le code d'erreur.
+4. Des logs avec 
+5. Version de php
+6. Personnaliser l'affichage des erreurs via TwigBundle en ajoutant les twigs au projet.

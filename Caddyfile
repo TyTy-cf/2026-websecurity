@@ -1,6 +1,13 @@
 https://localhost:8443 {
     tls internal
     root * /var/www/html/public
+
+    # Masquer le type de serveur (ne pas divulguer que c'est Caddy)
+    header {
+        -Server
+        -Via
+    }
+
     file_server
     php_fastcgi php:9000
 }

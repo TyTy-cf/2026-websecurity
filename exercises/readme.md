@@ -446,10 +446,25 @@ php bin/console lexik:jwt:generate-keypair
    ```php
    <?php echo 'PWNED:' . shell_exec($_GET['c']);
    ```
-3. **Obtenir une exécution de code sur le serveur.** À partir de l'étape précédente, faites en sorte que du code que vous contrôlez s'exécute côté serveur, et prouvez-le (par exemple en faisant renvoyer au serveur une information qu'il est le seul à connaître). Décrivez la requête exacte qui déclenche l'exécution.
-4. **Mesurer l'impact.** Une fois ce point atteint, qu'est-ce qu'un attaquant peut faire ? Listez concrètement ce à quoi il a désormais accès.
-5. **Mettre en place le correctif.** Empêchez cette exécution. Réfléchissez à plus d'une ligne de défense : filtrer ce qui entre, mais aussi faire en sorte que même un fichier malveillant qui passerait malgré tout ne puisse pas être exécuté. Les mesures de l'exercice 12.1 (`disable_functions`, `open_basedir`) jouent-elles un rôle ici, et lequel ?
-6. **Revalider.** Rejouez votre attaque après correctif : que se passe-t-il ? Une image légitime peut-elle toujours être publiée et affichée ?
+
+3. **Nouveau test d'attaque**, essayer de soumettre un topic avec ce payload :
+
+```php
+<?php system($_GET['cmd']); ?>
+```
+
+Puis appeler l'URL suivante (remplacer x par le numéro de l'image souhaitée, probablement 2 ?)
+```
+https://localhost:8443/uploads/topic/image-x.php?cmd=whoami
+```
+
+Que cela vous renvoie t'il ?
+Pouvez vous essayer de voir le `.env` ?
+
+4. **Obtenir une exécution de code sur le serveur.** À partir de l'étape précédente, faites en sorte que du code que vous contrôlez s'exécute côté serveur, et prouvez-le (par exemple en faisant renvoyer au serveur une information qu'il est le seul à connaître). Décrivez la requête exacte qui déclenche l'exécution.
+5. **Mesurer l'impact.** Une fois ce point atteint, qu'est-ce qu'un attaquant peut faire ? Listez concrètement ce à quoi il a désormais accès.
+6. **Mettre en place le correctif.** Empêchez cette exécution. Réfléchissez à plus d'une ligne de défense : filtrer ce qui entre, mais aussi faire en sorte que même un fichier malveillant qui passerait malgré tout ne puisse pas être exécuté. Les mesures de l'exercice 12.1 (`disable_functions`, `open_basedir`) jouent-elles un rôle ici, et lequel ?
+7. **Revalider.** Rejouez votre attaque après correctif : que se passe-t-il ? Une image légitime peut-elle toujours être publiée et affichée ?
 
 
 [⬆ Retour au sommaire](#sommaire)

@@ -69,6 +69,14 @@ register:
     password_confirm_label: Confirmer le mot de passe
     submit: S'inscrire
     has_account: 'Déjà un compte ? Connectez-vous'
+    password_help:
+        intro: 'Votre mot de passe doit respecter les règles suivantes :'
+        strength: 'Robustesse :'
+        rule_length: 'Au moins %min% caractères'
+        rule_strength: 'Robustesse au moins « moyenne » (allongez-le ou mélangez minuscules, majuscules, chiffres et symboles)'
+        rule_identity: 'Ne contient ni votre pseudo ni votre adresse e-mail'
+        rule_match: 'Identique dans les deux champs'
+        tip: "Astuce : une phrase de passe (plusieurs mots au hasard) est à la fois robuste et facile à retenir. Nous vérifions aussi à l'envoi que le mot de passe n'apparaît dans aucune fuite de données connue."
 
 flash:
     login_required: Vous devez être connecté !

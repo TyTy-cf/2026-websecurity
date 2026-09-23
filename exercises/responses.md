@@ -135,3 +135,30 @@
    - **Serveur web** : Caddy renvoie **403** sur tout `/uploads/*.php` (et variantes `.phtml`, `.phar`...) : même un script déposé n'est jamais passé à php-fpm.
    - **Mesures 12.1** : `disable_functions = exec,passthru,shell_exec,system` neutralise directement les payloads — même un `.php` exécuté ne pourrait plus lancer de commande shell. `allow_url_include = Off` empêche l'inclusion distante et `cgi.fix_pathinfo = 0` bloque l'attaque `image.jpg/x.php`. `open_basedir` n'est en revanche pas configuré dans le `security.ini` actuel ; s'il l'était, il confinerait les accès disque et empêcherait la lecture du `.env` hors du webroot. C'est une couche complémentaire, pas la première.
 7. Revalidation : après correctif, `/uploads/topic/image-2.php?cmd=id` renvoie **403** (jamais exécuté). Un fichier non-image est refusé au MIME, et un polyglotte JPEG valide est accepté mais son payload est **supprimé au ré-encodage** (la chaîne `PWNED` disparaît du fichier stocké). Une image légitime reste publiable et affichable : `/uploads/topic/<nom>.jpg` renvoie **200** en `image/jpeg`.
+
+## Exercice 12.3
+
+1. Après publication, l'image est servie à une URL du type `/uploads/topic/image-1.jpg`. Le nommage est séquentiel : `image-` suivi d'un numéro incrémental.
+2. Le second sujet donne `/uploads/topic/image-2.jpg`. On en déduit que le numéro s'incrémente à chaque upload : les URL sont donc entièrement prédictibles et énumérables (image-1, image-2, image-3...).
+3. Oui : en construisant moi-même `/uploads/topic/image-N.jpg` j'accède à l'image de n'importe quel sujet sans jamais passer par sa page.
+4. C'est une énumération / IDOR au niveau des fichiers. Le contrôle d'accès de l'application (sujet privé, supprimé ou réservé) ne s'applique pas au fichier statique : tant que le fichier est sur le disque, quiconque devine l'URL le récupère. Un tiers peut ainsi aspirer toutes les images en incrémentant le compteur, y compris celles de sujets auxquels il n'a pas accès.
+5. Correctif dans `UploaderService` : le fichier n'est plus nommé par un compteur mais par `uniqid()` + l'hexa du nom d'origine (ex. `6ab38a027aa18-6d61...jpg`). L'URL n'est plus ni devinable ni énumérable, il n'y a plus de suite à incrémenter.
+6. Revalidation : les nouvelles URL sont de la forme `/uploads/topic/6ab38a027aa18-<hexa>.jpg`, sans séquence exploitable. Une image légitime s'affiche toujours normalement : le chemin réel est stocké en base à la publication puis rendu dans le template, l'utilisateur n'a donc jamais à deviner le nom.
+
+> Remarque : `uniqid()` repose sur l'horodatage et n'est pas cryptographiquement imprévisible. Il supprime l'énumération séquentielle, mais pour une garantie plus forte on pourrait utiliser `bin2hex(random_bytes(16))`.
+
+## Exercice 13
+
+1. composer audit, le projet compte 9 vulnérabilitées connues affectant 4 bundles.
+2. HttpFoundation, Routing, SecurityHttp, Twig.
+3. On prend les versions non vulnérable et on met à jour composer : twig en 3.29, security-http en 7.4.19, http-foundation en 7.4.19, symfony routing en 7.4.18.
+4. un paquet abandonné ne comporte pas forcément de vulnérabilité mais symfony le signale car un paquet non maintenu ne sera jamais corrigé en cas de faille.
+5. Ajouter un job dans le ci-cd pour valider le composer audit et bloquer les déploiement s'il est invalide.
+6. Notre projet peut contenir un bundle vulnérable dans qu'on le sâche et il faut suivre et mettre à jour régulièrement le projet, utiliser des librairies maintenues.
+
+## Exercice 14
+
+1. On peut mettre un mot de passe de 1 caractère
+2. En base le mot de passe est hashé, et on a juste un NotBlank sur le formtype
+3. Au moins 12 caractères, un chiffre, une majuscule, une minuscule et un caractère spécial.
+4. Il 

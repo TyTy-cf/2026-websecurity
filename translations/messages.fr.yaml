@@ -35,6 +35,10 @@ comment:
 form:
     topic_title_label: Titre
     topic_content_label: Contenu
+    topic_category_label: Catégorie
+    topic_picture_label: Image
+    topic_picture_help: Laissez vide pour conserver l'image actuelle.
+    create_topic: Créer le sujet
     save_changes: Enregistrer les modifications
 
 category:

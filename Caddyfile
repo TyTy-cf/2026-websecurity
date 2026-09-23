@@ -1,6 +1,15 @@
 https://localhost:8443 {
     tls internal
     root * /var/www/html/public
-    file_server
-    php_fastcgi php:9000
+
+    route {
+        # Defense serveur : aucun script depose dans /uploads ne doit etre execute
+        # ni meme servi. Meme si un .php y est ecrit, il renvoie 403 au lieu d'etre
+        # passe a php-fpm. Couvre les variantes courantes (.phtml, .phar, .php5...).
+        @uploaded_scripts path_regexp (?i)^/uploads/.+\.(php|phtml|phar|phps|pht|php\d)$
+        respond @uploaded_scripts 403
+
+        php_fastcgi php:9000
+        file_server
+    }
 }

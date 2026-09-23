@@ -2,25 +2,32 @@
 
 namespace App\Controller;
 
-use App\Entity\Comment;
 use App\Repository\CommentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class CommentController extends AbstractController
 {
 
-    #[Route('/commentaires/{id}/supprimer', name: 'app_comment_delete', methods: ['GET'])]
+    #[Route('/commentaires/{id}/supprimer', name: 'app_comment_delete', methods: ['POST'])]
     public function delete(
         string                 $id,
+        Request                $request,
         EntityManagerInterface $entityManager,
         CommentRepository      $commentRepository
     ): Response
     {
         if (null === $comment = $commentRepository->findOneBy(['id' => $id])) {
             throw $this->createNotFoundException();
+        }
+
+        // Vérifie le jeton CSRF : la requête doit provenir d'un formulaire de notre site,
+        // pas d'une page extérieure. Sinon, on refuse (403).
+        if (!$this->isCsrfTokenValid('delete_comment_' . $comment->getId(), $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
         }
 
         $topic = $comment->getTopic();

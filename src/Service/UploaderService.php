@@ -17,8 +17,13 @@ readonly class UploaderService
     {
         $targetDir = $this->uploadDir . '/' . $directory;
 
+        // On ne fait pas confiance à l'extension envoyée par le client : elle est
+        // devinée à partir du type MIME réel du fichier. Un fichier PHP renommé en
+        // .jpg n'obtiendra donc jamais une extension .php ici.
+        $extension = $file->guessExtension() ?? 'bin';
+
         $count = count(glob($targetDir . '/image-*')) + 1;
-        $filename = 'image-' . $count . '.' . $file->getClientOriginalExtension();
+        $filename = 'image-' . $count . '.' . $extension;
 
         $file->move($targetDir, $filename);
 

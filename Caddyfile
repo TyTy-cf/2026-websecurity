@@ -1,6 +1,17 @@
 https://localhost:8443 {
     tls internal
     root * /var/www/html/public
-    file_server
-    php_fastcgi php:9000
+
+    # Le dossier des fichiers uploadés est servi uniquement en statique.
+    # On ne le passe jamais à PHP : un fichier .php qui atterrirait ici malgré
+    # tout serait renvoyé en texte brut, pas exécuté.
+    @uploads path /uploads/*
+    handle @uploads {
+        file_server
+    }
+
+    handle {
+        php_fastcgi php:9000
+        file_server
+    }
 }

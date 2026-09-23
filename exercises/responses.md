@@ -119,3 +119,4 @@
 4. Des logs avec 
 5. Version de php
 6. Personnaliser l'affichage des erreurs via TwigBundle en ajoutant les twigs au projet.
+

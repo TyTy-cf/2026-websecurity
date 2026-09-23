@@ -111,12 +111,27 @@
 7. On affiche toujours le même message de succès quoi qu'il arrive par contre on envoit le mail que si le compte n'existe pas encore.
 8. Même comportement dans les deux cas, redirection sur le login avec un message de succès. Par contre on peut se connecter sans passer par la validation du compte donc j'ai modifié la config pour bloquer le compte tant qu'il n'est pas activé.
 
-## Exercice 12
+## Exercice 12.1
 
 1. x-powered-by PHP/8.2.33, visible depuis les headers de la réponse serveur.
-2. Il peut connaitre les failles de sécurités connues de cette version et les exploiter
+2. Il peut connaitre les failles de sécurités connues de cette version et les exploiter.
 3. On a la version de PHP et le type de Serveur, le code d'erreur.
 4. Des logs avec 
-5. Version de php
+5. Version de php.
 6. Personnaliser l'affichage des erreurs via TwigBundle en ajoutant les twigs au projet.
 
+
+## Exercice 12.2
+
+1. Le champ annonce une image mais côté serveur, dans le code de départ, l'`UploaderService` faisait confiance à l'extension fournie par le client (`getClientOriginalExtension()`) pour nommer le fichier stocké : rien ne vérifiait le contenu réel. Le fichier est déposé dans `public/uploads/topic/` et servi ensuite directement par Caddy, dont le `php_fastcgi` passe à php-fpm tout `.php` situé sous `public/`.
+2. En contournant la validation JS (JS désactivé, ou requête interceptée / rejouée), on envoie un `shell.php`. Comme le nom stocké reprend l'extension du client, il est écrit tel quel en `.php` dans `/uploads/topic/`.
+3. Avec le payload `system($_GET['cmd'])`, appeler `/uploads/topic/image-2.php?cmd=whoami` exécute la commande et renvoie l'utilisateur php-fpm (`appuser`). On peut lire le `.env` en passant une commande qui `cat` le fichier (ex. `?cmd=cat+/var/www/html/.env`) : on récupère alors les identifiants de la base, l'`APP_SECRET` et le `MAILER_DSN`.
+4. Requête déclenchant l'exécution : `GET https://localhost:8443/uploads/topic/image-2.php?cmd=id`. Elle renvoie `uid=...` prouvant l'exécution côté serveur. Pour prouver l'accès à une info connue du seul serveur, `?cmd=cat+/var/www/html/.env` renvoie l'`APP_SECRET`.
+5. Impact : RCE complète avec les droits de php-fpm. L'attaquant peut lire le `.env` (identifiants MariaDB → accès total à la base, `APP_SECRET` → forger cookies/JWT, `MAILER_DSN` → envoyer des mails au nom du site), lire/écrire tout fichier accessible à `appuser`, déposer d'autres webshells pour la persistance, et pivoter vers les autres conteneurs (base, mailpit).
+6. Correctif en défense en profondeur, sur plusieurs lignes :
+   - **Front** : validation JS de l'extension (alerte + vide le champ) — confort seulement, contournable.
+   - **Form type** : contrainte `Assert\File(extensions: ['jpg','jpeg','png'])`.
+   - **Contrôleur / service** : `UploaderService` vérifie le **type MIME réel** (`getMimeType()` = finfo, pas l'en-tête client), **re-décode puis ré-encode l'image via GD** (les fichiers polyglottes image+PHP perdent leur charge utile : seuls les pixels survivent), et nomme le fichier `uniqid()` + hexa du nom d'origine avec une **extension déduite du MIME** (jamais du nom client, donc pas de `.php` ni de traversée de chemin).
+   - **Serveur web** : Caddy renvoie **403** sur tout `/uploads/*.php` (et variantes `.phtml`, `.phar`...) : même un script déposé n'est jamais passé à php-fpm.
+   - **Mesures 12.1** : `disable_functions = exec,passthru,shell_exec,system` neutralise directement les payloads — même un `.php` exécuté ne pourrait plus lancer de commande shell. `allow_url_include = Off` empêche l'inclusion distante et `cgi.fix_pathinfo = 0` bloque l'attaque `image.jpg/x.php`. `open_basedir` n'est en revanche pas configuré dans le `security.ini` actuel ; s'il l'était, il confinerait les accès disque et empêcherait la lecture du `.env` hors du webroot. C'est une couche complémentaire, pas la première.
+7. Revalidation : après correctif, `/uploads/topic/image-2.php?cmd=id` renvoie **403** (jamais exécuté). Un fichier non-image est refusé au MIME, et un polyglotte JPEG valide est accepté mais son payload est **supprimé au ré-encodage** (la chaîne `PWNED` disparaît du fichier stocké). Une image légitime reste publiable et affichable : `/uploads/topic/<nom>.jpg` renvoie **200** en `image/jpeg`.

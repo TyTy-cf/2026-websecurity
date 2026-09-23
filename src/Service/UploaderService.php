@@ -17,8 +17,8 @@ readonly class UploaderService
     {
         $targetDir = $this->uploadDir . '/' . $directory;
 
-        $count = count(glob($targetDir . '/image-*')) + 1;
-        $filename = 'image-' . $count . '.' . $file->getClientOriginalExtension();
+        $uniq = uniqid('', true);
+        $filename = $uniq . '.' . $file->getClientOriginalExtension();
 
         $file->move($targetDir, $filename);
 

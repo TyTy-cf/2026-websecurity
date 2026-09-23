@@ -104,6 +104,7 @@ final class TopicController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
             $topic->setAuthor($author)
                 ->setCreatedAt(new \DateTime())
                 ->setPicture($uploader->upload($form->get('picture')->getData(), 'topic'));

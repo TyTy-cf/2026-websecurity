@@ -38,4 +38,6 @@ décodé :
 }
 
 
+Exercice 12.2
+1 : Directory public/topic/image-X.extention
 

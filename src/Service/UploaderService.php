@@ -18,7 +18,8 @@ readonly class UploaderService
         $targetDir = $this->uploadDir . '/' . $directory;
 
         $uniq = uniqid('', true);
-        $filename = $uniq . '.' . $file->getClientOriginalExtension();
+        $hexdec = hexdec($file->getClientOriginalName());
+        $filename = $hexdec.'-' . $uniq . '.' . $file->getClientOriginalExtension();
 
         $file->move($targetDir, $filename);
 

@@ -26,8 +26,8 @@ nelmio_security:
             - 'no-referrer'
             - 'strict-origin-when-cross-origin'
 
-    # HSTS : force le navigateur à revenir en HTTPS pour les prochaines visites (exercice 6, Q8).
-    # max-age volontairement court au départ (1h) : voir le piège expliqué dans la correction.
+    # Exercice 6 — HSTS, le navigateur repassera en HTTPS tout seul la prochaine fois.
+    # max-age court au début (1h) : une fois mémorisé on peut plus revenir en arrière
     forced_ssl:
         hsts_max_age: 3600          # durée de mémorisation en secondes (1 heure ici)
         hsts_subdomains: false      # on n'étend pas la règle aux sous-domaines pour l'instant

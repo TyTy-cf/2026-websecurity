@@ -49,7 +49,7 @@ class SecurityController extends AbstractController
         MailerInterface $mailer,
         RateLimiterFactoryInterface $registrationLimiter,
     ): Response {
-        // Exercice 10 : on compte que les envois du formulaire, pas les affichages.
+        // Exercice 10 — on compte que les POST, sinon afficher la page suffirait à bloquer
         if ($request->isMethod('POST')) {
             $limit = $registrationLimiter->create($request->getClientIp())->consume();
 

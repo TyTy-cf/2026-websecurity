@@ -8,8 +8,8 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
-// Exercice 10 : limite /api/topic. On passe par un listener et pas par le contrôleur,
-// comme ça la limite s'applique à toutes les routes qui commencent par /api/topic.
+// Exercice 10 — listener et pas contrôleur, comme ça toutes les routes
+// sous /api/topic sont couvertes d'un coup
 #[AsEventListener(event: KernelEvents::REQUEST, priority: 16)]
 final readonly class ApiRateLimitSubscriber
 {

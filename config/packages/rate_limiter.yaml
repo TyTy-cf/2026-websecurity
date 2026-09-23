@@ -1,13 +1,13 @@
 framework:
     rate_limiter:
-        # Exercice 10 : limite les inscriptions par adresse IP.
+        # Exercice 10 — 5 inscriptions par heure et par IP
         registration:
             policy: 'sliding_window'
-            limit: 5                 # 5 inscriptions autorisées
-            interval: '1 hour'       # sur une fenêtre glissante d'une heure
+            limit: 5
+            interval: '1 hour'
 
-        # Exercice 10 : limite la consultation de l'API des sujets par adresse IP.
+        # Exercice 10 — 60 requêtes par minute et par IP
         api_topic:
             policy: 'sliding_window'
-            limit: 60                # 60 requêtes autorisées
-            interval: '1 minute'     # sur une fenêtre glissante d'une minute
+            limit: 60
+            interval: '1 minute'

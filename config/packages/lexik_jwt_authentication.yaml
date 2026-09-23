@@ -3,6 +3,6 @@ lexik_jwt_authentication:
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
 
-    # Exercice 8 : l'utilisateur est identifié dans le token par le claim `uuid`
-    # (rempli par App\EventListener\JwtCreatedListener), au lieu de l'email.
+    # Exercice 8 — on identifie par l'uuid et plus par l'email
+    # (l'uuid est mis dans le token par JwtCreatedListener)
     user_id_claim: uuid

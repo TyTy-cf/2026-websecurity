@@ -37,7 +37,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private ?int $id = null;
 
-    // Identifiant public, non devinable, utilisé dans le JWT à la place de l'email (exercice 8).
+    // Exercice 8 — identifiant public pas devinable, mis dans le JWT à la place de l'email
     #[ORM\Column(length: 36, unique: true)]
     private ?string $uuid = null;
 

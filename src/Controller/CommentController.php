@@ -24,8 +24,8 @@ final class CommentController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        // Vérifie le jeton CSRF : la requête doit provenir d'un formulaire de notre site,
-        // pas d'une page extérieure. Sinon, on refuse (403).
+        // Exercice 7 — sans ce jeton, n'importe quelle page extérieure pourrait
+        // déclencher la suppression à la place de l'utilisateur connecté
         if (!$this->isCsrfTokenValid('delete_comment_' . $comment->getId(), $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Jeton CSRF invalide.');
         }

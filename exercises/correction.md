@@ -985,3 +985,94 @@ Une seule vérification ne suffit pas. Le vrai verrou n'est pas de deviner si un
 « méchant » à l'entrée, mais de faire en sorte que le dossier où atterrissent les uploads ne
 puisse jamais exécuter de code. Le filtrage à l'entrée sert à donner un message propre à
 l'utilisateur ; c'est la config du serveur qui protège vraiment.
+
+
+# Exercice 13 — Audit des dépendances
+
+## Question 1 — Lancer l'audit
+
+L'outil est livré avec Composer, rien à installer. Dans le conteneur PHP :
+
+```bash
+composer audit
+```
+
+Il compare les versions installées (celles figées dans `composer.lock`) à une base de
+vulnérabilités connues. Sur ce projet il remonte **9 avis de sécurité sur 4 paquets** :
+
+- `symfony/http-foundation` — SSRF (medium)
+- `symfony/routing` — normalisation d'URL (medium)
+- `symfony/security-http` — contournement de firewall (high)
+- `twig/twig` — plusieurs bypass de sandbox (high + medium)
+
+Et aussi **2 paquets abandonnés** : `sebastian/code-unit` et
+`sebastian/code-unit-reverse-lookup`.
+
+## Question 2 — Lire un rapport
+
+Je prends la plus grave côté Twig, `twig/twig` :
+
+- **Paquet** : `twig/twig`
+- **CVE** : CVE-2026-49981 (high) — bypass de la sandbox quand son état change entre deux
+  rendus d'un `Template` mis en cache
+- **Versions affectées** : `<= 3.26.0`
+- **Version qui corrige** : la suivante (3.27+)
+
+Ma version installée était `v3.26.0`, donc bien dans la plage vulnérable.
+
+## Question 3 — Corriger
+
+Je mets à jour les paquets concernés puis je relance l'audit :
+
+```bash
+composer update "symfony/*" twig/twig --with-all-dependencies
+composer audit
+```
+
+Résultat : **« No security vulnerability advisories found »**. Les versions sont passées à :
+
+| Paquet | Avant | Après |
+|---|---|---|
+| twig/twig | 3.26.0 | 3.29.0 |
+| symfony/security-http | 7.4.12 | 7.4.19 |
+| symfony/http-foundation | 7.4.8 | 7.4.19 |
+| symfony/routing | 7.4.12 | 7.4.18 |
+
+Ce qui a changé dans `composer.lock` : les **versions verrouillées** des paquets (et leurs
+hash de référence) ont été réécrites vers les versions saines. `composer.lock` fige les
+versions exactes réellement installées ; c'est lui qui garantit que tout le monde a le même
+code. `composer.json` a aussi vu ses contraintes minimales relevées.
+
+Détail rencontré : dans le conteneur je suis `appuser` sans droit d'écriture sur
+`composer.lock` (appartenant à un autre uid). J'ai lancé l'update en root puis rendu les
+fichiers à mon utilisateur (`chown`).
+
+## Question 4 — Les paquets abandonnés
+
+Non, ce n'est pas une vulnérabilité au même titre. « Abandonné » veut dire que le paquet
+n'est plus maintenu : il n'y a pas de faille aujourd'hui, mais aucun correctif ne viendra
+demain. Ici les deux paquets sont des sous-dépendances de PHPUnit (du dev, pas de la prod) et
+Composer ne propose aucun remplacement. Il n'y a donc rien à faire dans l'urgence : c'est un
+risque à surveiller et à planifier, pas une alerte à traiter tout de suite.
+
+## Question 5 — Automatiser
+
+Pour que ça ne repose pas sur la bonne volonté d'un dev, je lance `composer audit`
+automatiquement en CI, avant toute mise en production :
+
+```yaml
+# .github/workflows/audit.yml
+- name: Security audit
+  run: composer audit
+```
+
+Si une vulnérabilité est trouvée, la commande sort en erreur, le pipeline échoue et la
+merge / le déploiement est bloqué. On peut compléter avec Dependabot ou Renovate qui ouvrent
+automatiquement des PR de mise à jour.
+
+## Ce que j'en retiens
+
+Aucun de ces paquets n'était vulnérable quand le code a été écrit : ils le sont devenus sans
+qu'une seule ligne de mon code ne change. La sécurité d'un projet n'est donc pas un état
+qu'on atteint une fois, c'est quelque chose qui se re-vérifie dans le temps. D'où l'intérêt
+d'automatiser l'audit plutôt que d'y penser à la main.

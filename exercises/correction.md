@@ -631,7 +631,7 @@ casse complètement une attaque automatisée.
 
 ## Question 6 — Vérifier le blocage
 
-Je rejoue les deux tests. Sur les deux routes, le blocage arrive à partir de la **6e**
+Je rejoue les deux tests. Sur les deux routes, le blocage arrive à partir de la 6e
 tentative (les 5 premières passent, la 6e est refusée).
 
 Sur l'API :
@@ -665,10 +665,10 @@ comptes différents depuis la même machine.
 
 ## Question 8 — Le bon mot de passe juste après un blocage
 
-Une fois le compte bloqué, je retente avec le **bon** mot de passe : refusé quand même, avec
+Une fois le compte bloqué, je retente avec le bon mot de passe : refusé quand même, avec
 le message "Trop de tentatives".
 
-Ça m'apprend que le throttling agit **avant** la vérification du mot de passe, pas après. Le
+Ça m'apprend que le throttling agit avant la vérification du mot de passe, pas après. Le
 compteur est consulté à l'entrée de l'authentification : si le seuil est dépassé, la requête
 est rejetée sans même regarder les identifiants. C'est ce qu'on veut, parce que si le contrôle
 se faisait après, l'attaquant saurait quand il tombe juste — et surtout le serveur continuerait
@@ -792,13 +792,13 @@ protégée automatiquement, sans que j'aie à y penser.
 
 Je relance les deux tests :
 
-- `/inscription` : 5 comptes créés, puis la 6e tentative renvoie **HTTP 429** et le script
+- `/inscription` : 5 comptes créés, puis la 6e tentative renvoie HTTP 429 et le script
   s'arrête.
   ```
     5  HTTP 302  spam1790087975.5@example.com   compte créé
     6  HTTP 429  spam1790087975.6@example.com   BLOQUÉ (rate limit)
   ```
-- `/api/topic` : les requêtes passent normalement puis la 60e renvoie **HTTP 429**.
+- `/api/topic` : les requêtes passent normalement puis la 60e renvoie HTTP 429.
 
 Dans les deux cas c'est bien le code 429 (Too Many Requests), et une utilisation normale
 (m'inscrire une fois, consulter quelques sujets) marche toujours sans rien voir.
@@ -808,9 +808,9 @@ Dans les deux cas c'est bien le code 429 (Too Many Requests), et une utilisation
 Les deux exercices utilisent le même composant Rate Limiter dessous, mais pas de la même
 façon :
 
-- l'exo 9 c'est de la **config pure** : `login_throttling` est déjà branché par Symfony sur
+- l'exo 9 c'est de la config pure : `login_throttling` est déjà branché par Symfony sur
   l'authentification, j'ai rien à écrire.
-- l'exo 10 c'est **à moi de décider** où et quoi compter, parce que Symfony sait pas ce qui
+- l'exo 10 c'est à moi de décider où et quoi compter, parce que Symfony sait pas ce qui
   mérite d'être limité dans mon appli. D'où les deux approches : dans le contrôleur pour une
   action précise, dans un listener pour une famille de routes.
 
@@ -834,8 +834,8 @@ Dans `TopicType`, le champ `picture` est un simple `FileType` sans aucune contra
 
 Rien ne vérifie le type ni l'extension : côté serveur, n'importe quel fichier passe.
 
-Et dans `UploaderService`, le nom du fichier enregistré reprend l'extension **fournie par
-le client** :
+Et dans `UploaderService`, le nom du fichier enregistré reprend l'extension fournie par
+le client :
 
 ```php
 $filename = 'image-' . $count . '.' . $file->getClientOriginalExtension();
@@ -908,7 +908,7 @@ C'est une compromission totale de l'application.
 
 J'ai mis trois lignes de défense.
 
-**1. Filtrer ce qui entre** — une contrainte `Image` sur le champ `picture` dans
+1. Filtrer ce qui entre — une contrainte `Image` sur le champ `picture` dans
 `TopicType` :
 
 ```php
@@ -923,7 +923,7 @@ J'ai mis trois lignes de défense.
 
 Un `.php` est maintenant refusé par le formulaire, même s'il se présente comme une image.
 
-**2. Ne plus subir l'extension du client** — dans `UploaderService`, l'extension est devinée
+2. Ne plus subir l'extension du client — dans `UploaderService`, l'extension est devinée
 à partir du contenu réel :
 
 ```php
@@ -933,7 +933,7 @@ $filename = 'image-' . $count . '.' . $extension;
 
 Un fichier PHP renommé n'obtiendra jamais une extension `.php` ici.
 
-**3. Empêcher l'exécution** — dans le `Caddyfile`, le dossier des uploads est servi en
+3. Empêcher l'exécution — dans le `Caddyfile`, le dossier des uploads est servi en
 statique pur, jamais passé à PHP :
 
 ```
@@ -954,7 +954,7 @@ texte brut.
 Le `Caddyfile` étant copié dans l'image (`COPY Caddyfile /etc/caddy/Caddyfile`), un
 `docker compose up -d --build caddy` est nécessaire pour que le changement soit pris.
 
-**Le rôle de l'exo 12.1** : `disable_functions` et `open_basedir` ne sont pas la protection
+Le rôle de l'exo 12.1 : `disable_functions` et `open_basedir` ne sont pas la protection
 principale mais des couches en plus. Si du PHP s'exécutait quand même, `disable_functions`
 (bloquant `system`, `shell_exec`…) ferait échouer `?cmd=whoami`, et `open_basedir`
 empêcherait de lire le `.env` hors du dossier autorisé. Ils réduisent l'impact ; ici c'est le
@@ -969,7 +969,7 @@ $ curl -sk "https://localhost:8443/uploads/topic/image-1.php?cmd=whoami"
 <?php system($_GET['cmd']); ?>
 ```
 
-Le serveur renvoie le **code source** en texte brut au lieu de l'exécuter : plus de RCE.
+Le serveur renvoie le code source en texte brut au lieu de l'exécuter : plus de RCE.
 
 Une image légitime reste servie normalement :
 
@@ -981,7 +981,7 @@ content-type: application/pdf
 
 ## Ce que j'en retiens
 
-Une seule vérification ne suffit pas. Le vrai verrou n'est pas de deviner si un fichier est
+Une seule vérification suffit pas. Le vrai verrou n'est pas de deviner si un fichier est
 « méchant » à l'entrée, mais de faire en sorte que le dossier où atterrissent les uploads ne
 puisse jamais exécuter de code. Le filtrage à l'entrée sert à donner un message propre à
 l'utilisateur ; c'est la config du serveur qui protège vraiment.
@@ -998,25 +998,25 @@ composer audit
 ```
 
 Il compare les versions installées (celles figées dans `composer.lock`) à une base de
-vulnérabilités connues. Sur ce projet il remonte **9 avis de sécurité sur 4 paquets** :
+vulnérabilités connues. Sur ce projet il remonte 9 avis de sécurité sur 4 paquets :
 
 - `symfony/http-foundation` — SSRF (medium)
 - `symfony/routing` — normalisation d'URL (medium)
 - `symfony/security-http` — contournement de firewall (high)
 - `twig/twig` — plusieurs bypass de sandbox (high + medium)
 
-Et aussi **2 paquets abandonnés** : `sebastian/code-unit` et
+Et aussi 2 paquets abandonnés : `sebastian/code-unit` et
 `sebastian/code-unit-reverse-lookup`.
 
 ## Question 2 — Lire un rapport
 
 Je prends la plus grave côté Twig, `twig/twig` :
 
-- **Paquet** : `twig/twig`
-- **CVE** : CVE-2026-49981 (high) — bypass de la sandbox quand son état change entre deux
+- Paquet : `twig/twig`
+- CVE : CVE-2026-49981 (high) — bypass de la sandbox quand son état change entre deux
   rendus d'un `Template` mis en cache
-- **Versions affectées** : `<= 3.26.0`
-- **Version qui corrige** : la suivante (3.27+)
+- Versions affectées : `<= 3.26.0`
+- Version qui corrige : la suivante (3.27+)
 
 Ma version installée était `v3.26.0`, donc bien dans la plage vulnérable.
 
@@ -1029,16 +1029,16 @@ composer update "symfony/*" twig/twig --with-all-dependencies
 composer audit
 ```
 
-Résultat : **« No security vulnerability advisories found »**. Les versions sont passées à :
+Résultat : « No security vulnerability advisories found ». Les versions sont passées à :
 
-| Paquet | Avant | Après |
-|---|---|---|
-| twig/twig | 3.26.0 | 3.29.0 |
-| symfony/security-http | 7.4.12 | 7.4.19 |
-| symfony/http-foundation | 7.4.8 | 7.4.19 |
-| symfony/routing | 7.4.12 | 7.4.18 |
+```
+twig/twig                 3.26.0  ->  3.29.0
+symfony/security-http     7.4.12  ->  7.4.19
+symfony/http-foundation   7.4.8   ->  7.4.19
+symfony/routing           7.4.12  ->  7.4.18
+```
 
-Ce qui a changé dans `composer.lock` : les **versions verrouillées** des paquets (et leurs
+Ce qui a changé dans `composer.lock` : les versions verrouillées des paquets (et leurs
 hash de référence) ont été réécrites vers les versions saines. `composer.lock` fige les
 versions exactes réellement installées ; c'est lui qui garantit que tout le monde a le même
 code. `composer.json` a aussi vu ses contraintes minimales relevées.
@@ -1049,15 +1049,15 @@ fichiers à mon utilisateur (`chown`).
 
 ## Question 4 — Les paquets abandonnés
 
-Non, ce n'est pas une vulnérabilité au même titre. « Abandonné » veut dire que le paquet
-n'est plus maintenu : il n'y a pas de faille aujourd'hui, mais aucun correctif ne viendra
+Non, ce est pas une vulnérabilité au même titre. « Abandonné » veut dire que le paquet
+n'est plus maintenu : y'a pas de faille aujourd'hui, mais aucun correctif ne viendra
 demain. Ici les deux paquets sont des sous-dépendances de PHPUnit (du dev, pas de la prod) et
 Composer ne propose aucun remplacement. Il n'y a donc rien à faire dans l'urgence : c'est un
 risque à surveiller et à planifier, pas une alerte à traiter tout de suite.
 
 ## Question 5 — Automatiser
 
-Pour que ça ne repose pas sur la bonne volonté d'un dev, je lance `composer audit`
+Pour que ça repose pas sur la bonne volonté d'un dev, je lance `composer audit`
 automatiquement en CI, avant toute mise en production :
 
 ```yaml
@@ -1083,9 +1083,9 @@ d'automatiser l'audit plutôt que d'y penser à la main.
 ## Question 1 — Le mot de passe le plus court possible
 
 Je m'inscris avec le mot de passe `1`. Le compte est créé (redirection 302). Donc la
-longueur minimale réellement acceptée aujourd'hui, c'est **un caractère**.
+longueur minimale acceptée aujourd'hui c'est un caractère.
 
-Et il est utilisable tout de suite : je me connecte avec `1` et je suis redirigée vers
+Et il est utilisable tout de suite : je me connecte avec `1` et je me retrouve sur
 l'accueil.
 
 ```
@@ -1093,10 +1093,10 @@ inscription avec « 1 »  -> HTTP 302 (compte créé)
 connexion avec « 1 »    -> redirige vers /  (connectée)
 ```
 
-Au passage j'ai remarqué autre chose : l'inscription envoie un mail d'activation, mais
-rien ne vérifie que le compte a été activé avant de laisser se connecter. Il n'y a aucun
-`UserChecker` ni `user_checker` dans `security.yaml`. Le mail d'activation est donc
-décoratif : le compte marche avant même qu'on ait cliqué dessus.
+Au passage j'ai remarqué autre chose. L'inscription envoie un mail d'activation, mais rien
+vérifie que le compte a été activé avant de laisser se connecter. Y'a aucun `UserChecker`
+ni `user_checker` dans `security.yaml`. Le mail sert donc à rien : le compte marche avant
+même qu'on ait cliqué dessus.
 
 ## Question 2 — Où le mot de passe est validé
 
@@ -1114,87 +1114,81 @@ La règle est dans `src/Form/RegistrationType.php`, sur le champ `plainPassword`
 `NotBlank()`, c'est tout. Aucune longueur, aucune vérification. D'où le résultat de la
 question 1.
 
-Il faut bien séparer les deux sujets :
+Il faut bien séparer les deux sujets. Le stockage est correct : `security.yaml` utilise
+`password_hashers: 'auto'` et le contrôleur hache avant d'enregistrer, donc rien est stocké
+en clair. L'entité va même plus loin, `__serialize()` remplace le hash par un CRC32C pour
+qu'il traîne pas en session.
 
-- **le stockage est correct.** `security.yaml` utilise `password_hashers: 'auto'`, et le
-  contrôleur hache avant d'enregistrer. Rien n'est stocké en clair. L'entité va même plus
-  loin : `__serialize()` remplace le hash par un CRC32C pour qu'il ne traîne pas en session.
-- **la qualité, elle, n'est pas contrôlée du tout.** C'est ça le vrai sujet de l'exercice.
+La qualité, elle, est pas contrôlée du tout. C'est ça le vrai sujet de l'exercice.
 
 ## Question 3 — Définir la politique
 
-Mon intuition de départ c'était « une majuscule, un chiffre, un caractère spécial ».
-Après avoir cherché, c'est justement ce qu'il ne faut plus faire.
+Mon intuition de départ c'était « une majuscule, un chiffre, un caractère spécial ». Après
+avoir cherché, c'est justement ce qu'il faut plus faire.
 
 Le contre-exemple qui m'a convaincue : `Password1!` respecte les trois règles, et il est
-dans le top 100 de tous les dictionnaires de cassage. Le problème, c'est que les humains
-répondent aux règles de façon prévisible — majuscule au début, chiffre à la fin,
-caractère spécial `!`. L'attaquant le sait et adapte son dictionnaire. On embête
-l'utilisateur sans agrandir l'espace de recherche.
+dans le top 100 de tous les dictionnaires de cassage. Le problème c'est que les humains
+répondent aux règles de façon prévisible. Majuscule au début, chiffre à la fin, caractère
+spécial `!`. L'attaquant le sait et adapte son dictionnaire. On embête l'utilisateur sans
+agrandir l'espace de recherche.
 
-**Le NIST** (SP 800-63B révision 4, juillet 2025) demande 15 caractères minimum quand le
-mot de passe est le seul facteur, de supporter jusqu'à 64 caractères, et **interdit**
-d'imposer des règles de composition ainsi que le changement périodique forcé. Il rend en
-revanche obligatoire la vérification contre une liste de mots de passe compromis.
+Le NIST (SP 800-63B révision 4, juillet 2025) demande 15 caractères minimum quand le mot de
+passe est le seul facteur, de supporter jusqu'à 64 caractères, et il interdit d'imposer des
+règles de composition ainsi que le changement périodique forcé. Il rend par contre
+obligatoire la vérification contre une liste de mots de passe compromis.
 
-**La CNIL** (délibération 2022-100) raisonne en entropie et pas en classes de caractères.
-Trois cas : 80 bits si le mot de passe est seul, **50 bits s'il y a une restriction
-d'accès**, 13 bits avec du matériel dédié.
+La CNIL (délibération 2022-100) raisonne en entropie et pas en classes de caractères. Trois
+cas : 80 bits si le mot de passe est seul, 50 bits s'il y a une restriction d'accès, 13 bits
+avec du matériel dédié.
 
-C'est ce cas du milieu qui me concerne : j'ai mis en place le login throttling à
-l'exercice 9. La CNIL reconnaît explicitement qu'une protection contre le brute-force
-permet d'être moins exigeant avec l'utilisateur. 50 bits, ça correspond à peu près à
-12 caractères variés, ou une phrase de 4-5 mots.
+C'est le cas du milieu qui me concerne, parce que j'ai mis le login throttling à l'exercice
+9. La CNIL reconnaît qu'une protection contre le brute-force permet d'être moins exigeant
+avec l'utilisateur. 50 bits ça correspond à peu près à 12 caractères variés, ou une phrase
+de 4-5 mots.
 
-La politique que je retiens :
-
-| Règle | Valeur |
-|---|---|
-| Longueur minimale | 12 caractères |
-| Longueur maximale | 4096 (ne jamais tronquer) |
-| Règles de composition | aucune |
-| Force réelle mesurée | `PasswordStrength`, score moyen |
-| Mots de passe fuités | `NotCompromisedPassword` |
+Du coup ma politique : 12 caractères minimum, 4096 maximum (pour jamais tronquer), aucune
+règle de composition, une mesure de la force réelle avec `PasswordStrength`, et surtout un
+refus des mots de passe déjà fuités avec `NotCompromisedPassword`.
 
 ## Question 4 — Les autres portes d'entrée
 
 J'ai cherché tous les endroits où un mot de passe peut entrer :
 
 ```
-src/Form/RegistrationType.php      le formulaire d'inscription
+src/Form/RegistrationType.php              le formulaire d'inscription
 src/Controller/SecurityController.php:69   hashPassword() puis setPassword()
 src/Repository/UserRepository.php:31       upgradePassword()  <- re-hachage au login
-src/Entity/User.php                ApiResource, mais GET /user/me uniquement
+src/Entity/User.php                        ApiResource, mais GET /user/me uniquement
 ```
 
 Pas de CRUD admin utilisateur, pas de fixtures, pas de commande console, aucune opération
-API en écriture. Le `upgradePassword()` reçoit un hash déjà calculé, ce n'est pas un point
+API en écriture. Le `upgradePassword()` reçoit un hash déjà calculé, c'est pas un point
 d'entrée de politique.
 
-Donc aujourd'hui, oui, le formulaire est la seule porte. **Mais ce n'est pas la question.**
+Donc aujourd'hui oui, le formulaire est la seule porte. Mais c'est pas la question.
 
-Ce qui compte, c'est que la règle vit dans un *formulaire*, sur un champ `mapped => false`
-qui ne touche même pas l'entité. C'est la couche présentation. Le jour où on ajoute un
-« mot de passe oublié », un back-office ou une commande `app:create-user`, aucun ne passera
-par `RegistrationType` : la politique sera contournée, et silencieusement. Pas d'erreur,
-juste un compte avec `123`.
+Ce qui compte c'est que la règle vit dans un formulaire, sur un champ `mapped => false` qui
+touche même pas l'entité. C'est la couche présentation. Le jour où on ajoute un « mot de
+passe oublié », un back-office ou une commande `app:create-user`, aucun passera par
+`RegistrationType` : la politique sera contournée, et en silence. Pas d'erreur, juste un
+compte avec `123`.
 
-C'est exactement la leçon de l'exercice 5. Le bouton « Edit » caché dans le template ne
-protégeait rien parce que l'URL restait accessible ; j'avais déplacé le contrôle vers le
-contrôleur, c'est-à-dire vers la ressource. Ici c'est le même réflexe : **la règle doit
-descendre au niveau de la donnée**.
+C'est exactement la leçon de l'exercice 5. Le bouton « Edit » caché dans le template
+protégeait rien parce que l'URL restait accessible, et j'avais déplacé le contrôle vers le
+contrôleur, donc vers la ressource. Ici c'est le même réflexe : la règle doit descendre au
+niveau de la donnée.
 
-La difficulté propre au mot de passe, c'est qu'on ne peut pas mettre la contrainte sur
-`User::$password` : cette propriété contient le **hash**. Valider « au moins 12 caractères »
-sur un hash n'a aucun sens, il fait toujours 60 caractères. Le clair n'existe que le temps
-de la requête et n'atteint jamais l'entité.
+La difficulté propre au mot de passe, c'est qu'on peut pas mettre la contrainte sur
+`User::$password` : cette propriété contient le hash. Valider « au moins 12 caractères » sur
+un hash ça veut rien dire, il fait toujours 60 caractères. Le clair existe que le temps de
+la requête et il atteint jamais l'entité.
 
 ## Question 5 — Le correctif
 
 Deux pièces.
 
-**1. Une contrainte composée**, dans `src/Validator/StrongPassword.php`. Symfony fournit
-`Compound` exactement pour ça : regrouper plusieurs contraintes sous un seul attribut.
+D'abord une contrainte composée, dans `src/Validator/StrongPassword.php`. Symfony fournit
+`Compound` exactement pour ça, regrouper plusieurs contraintes sous un seul attribut.
 
 ```php
 #[\Attribute]
@@ -1212,33 +1206,34 @@ class StrongPassword extends Compound
 }
 ```
 
-La politique est écrite à un seul endroit. Un futur formulaire de réinitialisation met
-`#[StrongPassword]` et hérite de tout, y compris des évolutions futures.
+Comme ça la politique est écrite à un seul endroit. Un futur formulaire de
+réinitialisation met `#[StrongPassword]` et hérite de tout.
 
-`NotCompromisedPassword` interroge *Have I Been Pwned* en k-anonymat : seuls les 5 premiers
-caractères du SHA-1 partent, le mot de passe ne quitte jamais le serveur.
+`NotCompromisedPassword` interroge Have I Been Pwned en k-anonymat : seuls les 5 premiers
+caractères du SHA-1 partent, le mot de passe quitte jamais le serveur.
 
-**2. Une propriété non persistée sur l'entité**, qui porte le clair le temps de la requête :
+Ensuite une propriété non persistée sur l'entité, qui porte le clair le temps de la
+requête :
 
 ```php
 #[StrongPassword]
 private ?string $plainPassword = null;
 ```
 
-Pas de `#[ORM\Column]`, elle ne touche jamais la base. Et j'ai ajouté une ligne dans
-`__serialize()` pour que ce clair ne parte jamais en session :
+Pas de `#[ORM\Column]`, elle touche jamais la base. Et j'ai ajouté une ligne dans
+`__serialize()` pour que ce clair parte jamais en session :
 
 ```php
 unset($data["\0".self::class."\0plainPassword"]);
 ```
 
-Ensuite le formulaire devient un simple champ mappé, sans contrainte, et le contrôleur lit
-`$user->getPlainPassword()` puis le remet à `null` après hachage.
+Après ça le formulaire devient un simple champ mappé sans contrainte, et le contrôleur lit
+`$user->getPlainPassword()` puis le remet à `null` une fois haché.
 
-**Un bug que j'ai trouvé en route.** `RepeatedType` force `error_bubbling: false` : les
-violations restent sur le nœud parent, jamais sur `.first` / `.second`. Or le template ne
+J'ai aussi trouvé un bug en route. `RepeatedType` force `error_bubbling: false`, donc les
+violations restent sur le nœud parent et jamais sur `.first` / `.second`. Or le template
 rendait que les deux enfants. Résultat, le `NotBlank()` existant et le message « Les mots de
-passe ne correspondent pas. » étaient **déjà avalés en silence** depuis le début. Il a fallu
+passe ne correspondent pas. » étaient déjà avalés en silence depuis le début. Il a fallu
 ajouter dans `register.html.twig` :
 
 ```twig
@@ -1258,17 +1253,16 @@ pourquoi son inscription échoue.
 "girafe-turquoise-..."   HTTP 302  accepté, et la connexion marche
 ```
 
-Le cas intéressant c'est `Azertyuiop123456`. Il fait 16 caractères, donc il passe la
-longueur. Il passe aussi `PasswordStrength`. **Il n'est attrapé que par la vérification
-des fuites.** C'est la démonstration que la longueur seule ne suffit pas : un mot de passe
-peut être long, varié, et pourtant connu de tous les attaquants parce qu'il a déjà fuité.
+Le cas intéressant c'est `Azertyuiop123456`. Il fait 16 caractères donc il passe la
+longueur, et il passe aussi `PasswordStrength`. Il est attrapé uniquement par la
+vérification des fuites. Ça montre bien que la longueur seule suffit pas : un mot de passe
+peut être long, varié, et quand même connu de tous les attaquants parce qu'il a déjà fuité.
 
 Les messages sont compréhensibles et disent quoi faire, pas juste « mot de passe invalide » :
+« Votre mot de passe doit faire au moins 12 caractères. Une phrase facile à retenir fait
+très bien l'affaire. »
 
-> Votre mot de passe doit faire au moins 12 caractères. Une phrase facile à retenir fait
-> très bien l'affaire.
-
-Et surtout, j'ai vérifié que la règle ne dépend plus du formulaire. En validant un `User`
+Et surtout j'ai vérifié que la règle dépend plus du formulaire. En validant un `User`
 construit à la main, sans contrôleur ni formulaire :
 
 ```
@@ -1277,43 +1271,39 @@ construit à la main, sans contrôleur ni formulaire :
 "girafe-turquoise-..."    0 violation(s)
 ```
 
-C'est ça la vraie réponse à la question 5 : la politique est sur la donnée, donc n'importe
+C'est ça la vraie réponse à la question 5. La politique est sur la donnée, donc n'importe
 quelle porte d'entrée en hérite.
 
 ## Question 7 — Prendre du recul
 
-Non, une politique stricte ne suffit pas. Elle réduit la probabilité qu'un mot de passe
-soit deviné, mais elle ne fait que ça.
+Non, une politique stricte suffit pas. Elle réduit la probabilité qu'un mot de passe soit
+deviné, mais elle fait que ça.
 
-Plusieurs mesures déjà vues dans le parcours agissent sur le même risque :
+Plusieurs mesures déjà vues agissent sur le même risque. Le login throttling de l'exercice 9
+rend le brute-force impraticable quelle que soit la qualité du mot de passe. Le hachage fait
+qu'une fuite de la base donne pas les mots de passe en clair. Le cookie `httponly` de
+l'exercice 1 et la correction des XSS des exercices 2 à 4 empêchent de voler la session sans
+connaître le mot de passe.
 
-- le **login throttling** (exercice 9) rend le brute-force impraticable, quelle que soit la
-  qualité du mot de passe
-- le **hachage** (`password_hashers: auto`) fait qu'une fuite de la base ne donne pas les
-  mots de passe en clair
-- le **cookie `httponly` + `secure`** (exercice 1) et la correction des **XSS** (exercices
-  2 à 4) empêchent de voler la session sans connaître le mot de passe
-- les **en-têtes de sécurité** (exercice 6) limitent les dégâts si une faille passe
+Mais toutes ces mesures ont la même limite : si l'attaquant connaît le mot de passe, il
+entre. Phishing, fuite chez un autre site où l'utilisateur a réutilisé le même mot de passe,
+keylogger. Dans tous ces cas la politique a servi à rien.
 
-Mais toutes ces mesures ont la même limite : **si l'attaquant connaît le mot de passe, il
-entre**. Phishing, fuite chez un autre site où l'utilisateur a réutilisé le même mot de
-passe, keylogger — dans tous ces cas la politique n'a servi à rien.
-
-La seule mesure qui protège même quand le mot de passe est connu, c'est
-l'**authentification à deux facteurs**. C'est le seul mécanisme qui ajoute quelque chose que
-l'attaquant n'a pas : un appareil physique. C'est d'ailleurs pour ça que le NIST autorise
-de descendre à 8 caractères quand il y a du MFA, contre 15 sans.
+La seule mesure qui protège même quand le mot de passe est connu, c'est l'authentification à
+deux facteurs. C'est le seul truc qui ajoute quelque chose que l'attaquant a pas : un
+appareil physique. C'est d'ailleurs pour ça que le NIST autorise de descendre à 8 caractères
+quand il y a du MFA, contre 15 sans.
 
 ## Ce que j'en retiens
 
 Le réflexe « majuscule + chiffre + caractère spécial » est resté dans toutes les têtes alors
 que les deux référentiels l'ont abandonné. Ce qui compte vraiment c'est la longueur, et
-surtout de refuser ce qui a déjà fuité — parce qu'un mot de passe fuité est cassé en une
-requête, peu importe à quel point il a l'air solide.
+surtout de refuser ce qui a déjà fuité, parce qu'un mot de passe fuité est cassé en une
+requête même s'il a l'air solide.
 
-Et comme à l'exercice 5, le vrai sujet n'était pas la règle elle-même mais **où on la pose**.
-Une contrainte sur un formulaire protège ce formulaire ; une contrainte sur la donnée protège
-l'application. Une règle qu'on peut contourner en empruntant une autre porte n'est pas une
+Et comme à l'exercice 5, le vrai sujet c'était pas la règle elle-même mais où on la pose.
+Une contrainte sur un formulaire protège ce formulaire, une contrainte sur la donnée protège
+l'application. Une règle qu'on peut contourner en prenant une autre porte, c'est pas une
 règle de sécurité, c'est une suggestion.
 
 Un arbitrage que j'ai dû trancher : `NotCompromisedPassword` a `skipOnError: false` par

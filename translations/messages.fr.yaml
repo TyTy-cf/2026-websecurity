@@ -19,6 +19,8 @@ home:
     no_topics: Aucun sujet pour le moment.
 
 topic:
+    new_title: Nouveau sujet
+    new_heading: Créer un sujet
     edit_title: 'Modifier %title%'
     edit_heading: Modifier le sujet
     comments_heading: 'Commentaires (%count%)'

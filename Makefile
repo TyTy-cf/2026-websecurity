@@ -1,5 +1,7 @@
 DOCKER_COMPOSE ?= docker compose
-DOCKER_USER ?= "$(shell id -u):$(shell id -g)"
+USER_ID ?= $(shell id -u)
+GROUP_ID ?= $(shell id -g)
+DOCKER_USER ?= "$(USER_ID):$(GROUP_ID)"
 ENV ?= "dev"
 PREFIX ?= "fakeddit"
 DB_NAME="fakeddit"
@@ -39,14 +41,14 @@ db:
 	@echo "Database import completed."
 
 up:
-	@docker compose up -d
+	@USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) docker compose up -d
 
 up-build:
-	@docker compose up -d --build
+	@USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) docker compose up -d --build
 
 up-build-linux:
 	@docker compose down
-	@docker compose build --no-cache --build-arg USER_ID=$$(id -u) --build-arg GROUP_ID=$$(id -g) && docker compose up -d
+	@USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) docker compose build --no-cache && USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID) docker compose up -d
 
 down:
 	@docker compose down

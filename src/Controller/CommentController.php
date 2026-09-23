@@ -4,25 +4,26 @@ namespace App\Controller;
 
 use App\Entity\Comment;
 use App\Repository\CommentRepository;
+use App\Security\CommentVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class CommentController extends AbstractController
 {
 
-    #[Route('/commentaires/{id}/supprimer', name: 'app_comment_delete', methods: ['GET'])]
+    #[Route('/commentaires/{id}/supprimer', name: 'app_comment_delete', methods: ['POST'])]
+    #[IsGranted(CommentVoter::DELETE, 'comment')]
+    #[IsCsrfTokenValid('delete-item', tokenKey: 'token')]
     public function delete(
-        string                 $id,
+        Comment                 $comment,
         EntityManagerInterface $entityManager,
         CommentRepository      $commentRepository
     ): Response
     {
-        if (null === $comment = $commentRepository->findOneBy(['id' => $id])) {
-            throw $this->createNotFoundException();
-        }
-
         $topic = $comment->getTopic();
 
         $entityManager->remove($comment);

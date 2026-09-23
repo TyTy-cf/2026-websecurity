@@ -10,6 +10,11 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
+        # used by the JWT authenticator: the token carries the opaque cryptedId, not the e-mail
+        app_user_crypted_id_provider:
+            entity:
+                class: App\Entity\User
+                property: cryptedId
 
     firewalls:
         dev:
@@ -20,6 +25,7 @@ security:
         api_login:
             pattern: ^/api/login_check
             stateless: true
+            provider: app_user_provider
             json_login:
                 check_path: /api/login_check
                 username_path: email
@@ -33,18 +39,19 @@ security:
         api:
             pattern: ^/api
             stateless: true
+            provider: app_user_crypted_id_provider
             jwt: ~
 
         main:
             lazy: true
             provider: app_user_provider
+            login_throttling:
+                max_attempts: 3
+                interval: '15 minutes'
             form_login:
                 login_path: app_login
                 check_path: app_login
                 enable_csrf: true
-            login_throttling:
-                max_attempts: 5
-                interval: '15 minutes'
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 604800 # 1 week

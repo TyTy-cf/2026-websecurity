@@ -15,3 +15,13 @@ window.addEventListener('load', () => {
     }
 
 });
+
+window.addEventListener('load', () => {
+    const shareLink = document.getElementById('share-link') as HTMLInputElement|null;
+
+    if (!shareLink) {
+        return;
+    }
+
+    shareLink.addEventListener('click', () => shareLink.select());
+});

@@ -5,13 +5,16 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\RegistrationType;
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
@@ -43,37 +46,63 @@ class SecurityController extends AbstractController
     public function register(
         Request $request,
         EntityManagerInterface $entityManager,
+        UserRepository $userRepository,
         UserPasswordHasherInterface $passwordHasher,
         MailerInterface $mailer,
+        RateLimiterFactoryInterface $registrationLimiter,
     ): Response {
         $user = new User();
         $form = $this->createForm(RegistrationType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword($passwordHasher->hashPassword($user, $form->get('plainPassword')->getData()))
-                ->setRoles([])
-                ->setCreatedAt(new \DateTime())
-                ->setActivationCode(bin2hex(random_bytes(16)));
+            $limit = $registrationLimiter->create($request->getClientIp())->consume();
+            if (!$limit->isAccepted()) {
+                throw new TooManyRequestsHttpException(null, 'Trop de tentatives d\'inscription, réessayez plus tard.');
+            }
 
-            $entityManager->persist($user);
-            $entityManager->flush();
+            $hashedPassword = $passwordHasher->hashPassword($user, $form->get('plainPassword')->getData());
 
-            $activationUrl = $this->generateUrl(
-                'app_register_validate',
-                ['activationCode' => $user->getActivationCode()],
-                UrlGeneratorInterface::ABSOLUTE_URL,
-            );
+            if (null === $userRepository->findOneBy(['email' => $user->getEmail()])) {
+                $user->setPassword($hashedPassword)
+                    ->setRoles([])
+                    ->setCreatedAt(new \DateTime())
+                    ->setActivationCode(bin2hex(random_bytes(16)));
 
-            $email = (new Email())
-                ->from('no-reply@reddit-ish.local')
-                ->to($user->getEmail())
-                ->subject('Confirmation de votre inscription')
-                ->text("Merci de votre inscription, finalisez celle-ci en cliquant sur ce lien : {$activationUrl}");
+                $entityManager->persist($user);
 
-            $mailer->send($email);
+                try {
+                    $entityManager->flush();
 
-            $this->addFlash('success', 'flash.account_created');
+                    $activationUrl = $this->generateUrl(
+                        'app_register_validate',
+                        ['activationCode' => $user->getActivationCode()],
+                        UrlGeneratorInterface::ABSOLUTE_URL,
+                    );
+
+                    $email = (new Email())
+                        ->from('no-reply@reddit-ish.local')
+                        ->to($user->getEmail())
+                        ->subject('Confirmation de votre inscription')
+                        ->text("Merci de votre inscription, finalisez celle-ci en cliquant sur ce lien : {$activationUrl}");
+                } catch (UniqueConstraintViolationException) {
+                }
+            } else {
+                $mailer->send(
+                    (new Email())
+                        ->from('no-reply@reddit-ish.local')
+                        ->to($user->getEmail())
+                        ->subject('Tentative d\'inscription avec votre adresse e-mail')
+                        ->text(
+                            "Quelqu'un vient de tenter de créer un compte avec votre adresse e-mail.\n"
+                            ."Si c'était vous, vous possédez déjà un compte : connectez-vous depuis "
+                            .$this->generateUrl('app_login', [], UrlGeneratorInterface::ABSOLUTE_URL)."\n"
+                            ."Sinon, vous pouvez ignorer ce message, aucun compte n'a été créé."
+                        )
+                );
+            }
+
+            $this->addFlash('success', 'flash.registration_submitted');
 
             return $this->redirectToRoute('app_login');
         }

@@ -38,7 +38,12 @@
                     <div>{{ comment.content|raw }}</div>
                 </div>
                 {% if app.user and app.user == comment.author %}
-                    <a href="{{ path('app_comment_delete', { id: comment.id }) }}" class="btn btn-sm btn-outline-danger">{{ 'common.delete'|trans }}</a>
+                    <form action="{{ url('app_comment_delete', { id: comment.id }) }}" method="post">
+                        {# the argument of csrf_token() is the token ID, an arbitrary string used to generate the token #}
+                        <input type="hidden" name="token" value="{{ csrf_token('delete-item') }}">
+
+                        <button class="btn btn-sm btn-outline-danger" type="submit">{{ 'common.delete'|trans }}</button>
+                    </form>
                 {% endif %}
             </li>
         {% else %}

@@ -1,4 +1,8 @@
+# config/packages/nelmio_security.yaml
 nelmio_security:
+    forced_ssl:
+        hsts_max_age: 2592000 # 30 days
+        hsts_subdomains: true
     # prevents framing of the entire site
     clickjacking:
         paths:
@@ -9,7 +13,7 @@ nelmio_security:
             default-src: [ "'self'" ]
             script-src: [ "'self'" ]
             style-src: [ "'self'" ]
-            img-src: [ "'self'", 'https://picsum.photos', 'https://fastly.picsum.photos', 'data:']
+            img-src: [ "'self'", 'https://picsum.photos', 'https://fastly.picsum.photos' ]
 
     # disables content type sniffing for script resources
     content_type:
@@ -23,5 +27,5 @@ nelmio_security:
     referrer_policy:
         enabled: true
         policies:
-            - 'no-referrer'
-            - 'strict-origin-when-cross-origin'
+        - 'no-referrer'
+        - 'strict-origin-when-cross-origin'

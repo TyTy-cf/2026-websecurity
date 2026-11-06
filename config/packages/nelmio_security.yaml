@@ -4,13 +4,6 @@ nelmio_security:
         paths:
             '^/.*': DENY
 
-    csp:
-        enforce:
-            default-src: [ "'self'" ]
-            script-src: [ "'self'" ]
-            style-src: [ "'self'" ]
-            img-src: [ "'self'", 'https://picsum.photos', 'https://fastly.picsum.photos', 'data:']
-
     # disables content type sniffing for script resources
     content_type:
         nosniff: true

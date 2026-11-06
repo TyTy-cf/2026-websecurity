@@ -29,6 +29,19 @@ final class TopicController extends AbstractController
         ]);
     }
 
+    #[Route('/populaires', name: 'app_topic_popular')]
+    public function popular(Request $request, TopicRepository $topicRepository): Response
+    {
+        $period = $request->query->getInt('periode', 365);
+        $sort = $request->query->get('tri', 'score');
+
+        return $this->render('front/topic/popular.html.twig', [
+            'period' => $period,
+            'sort' => $sort,
+            'topics' => $topicRepository->findPopular($period, $sort),
+        ]);
+    }
+
     #[Route('/sujets/{id}', name: 'app_topic_show')]
     public function show(
         Topic $topic,

@@ -37,6 +37,7 @@
 - [Exercice 12.3 — Images à URL prédictibles](#exercice-12-3)
 - [Exercice 13 — Audit des dépendances](#exercice-13)
 - [Exercice 14 — Politique de mot de passe](#exercice-14)
+- [Exercice 15 — Injection SQL](#exercice-15)
 
 
 <a id="exercice-1"></a>
@@ -545,3 +546,31 @@ Pouvez vous essayer de voir le `.env` ?
 
 
 [⬆ Retour au sommaire](#sommaire)
+
+
+---
+
+<a id="exercice-15"></a>
+# Exercice 15 — Injection SQL
+
+
+## Pour commencer
+
+
+- Une page **Sujets populaires** est accessible depuis l'en-tête, sans être connecté
+- Elle classe les sujets selon leur activité, avec un filtre de période et un choix de tri
+- Commencez à la main, avec votre navigateur. Un outil comme `sqlmap` est autorisé, mais seulement une fois que vous avez compris ce que vous cherchez
+
+
+## Questions
+
+
+1. **Explorer la page.** Changez de période et de tri : quelles informations partent au serveur, et sous quelle forme ?
+2. **Retrouver la requête exécutée** derrière cette page, dans le repository. Comment est-elle construite ? Le code vous paraît-il *a priori* à l'abri d'une injection SQL ? Pourquoi ?
+3. **Mettre les mains dedans.** Remplacez à la main, dans l'URL, la valeur du paramètre de tri par quelque chose d'inattendu. Qu'affiche l'application ? Que vous apprend sa réponse sur la façon dont votre valeur est utilisée ?
+4. **Sortir du cadre.** La page n'affiche que quelques champs des sujets. Parvenez-vous à faire trier la liste selon une donnée qui n'est **jamais** affichée, et qui appartient à une autre table que `topic` ? En observant l'ordre des sujets visibles, qu'est-ce qu'un attaquant peut en déduire sur cette donnée cachée ?
+5. **Mesurer les limites.** Essayez d'aller plus loin : une sous-requête, un `UNION`, une seconde requête enchaînée. Qu'est-ce qui passe, qu'est-ce qui est refusé, et par quoi ? Qu'est-ce que cela vous dit sur ce que la couche ORM empêche — et sur ce qu'elle n'empêche pas ?
+6. **Mettre en place le correctif.** La page doit garder exactement le même comportement fonctionnel (mêmes périodes, mêmes tris, mêmes chiffres). Pourquoi la solution qui protège la période ne s'applique-t-elle pas, telle quelle, au paramètre de tri ?
+7. **Revalider.** Votre manipulation de la question 4 fonctionne-t-elle encore ? Que renvoie désormais l'application pour une valeur de tri inattendue ?
+8. **Prendre du recul.** « J'utilise le QueryBuilder (ou l'ORM), donc je suis à l'abri de l'injection SQL » : vrai ou faux ? Nuancez. Enfin, en relisant la configuration de connexion à la base, qu'est-ce qui aurait pu limiter les dégâts, même avec la faille en place ?
+

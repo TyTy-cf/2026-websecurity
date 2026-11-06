@@ -12,6 +12,7 @@ common:
     posted_by: 'publié par %author% le %date%'
     view_topic: Voir le sujet
     back_office: Back-office
+    popular: Sujets populaires
 
 home:
     title: Accueil - Reddit-Ish
@@ -45,6 +46,20 @@ form:
 category:
     share_label: 'Partager cette catégorie avec un ami :'
     no_topics: Aucun sujet dans cette catégorie pour le moment.
+
+popular:
+    title: Sujets populaires - Reddit-Ish
+    heading: Sujets populaires
+    period_label: 'Période :'
+    period_30: 30 derniers jours
+    period_365: 12 derniers mois
+    period_3650: Depuis toujours
+    sort_label: 'Trier par :'
+    sort_score: Score
+    sort_comment_count: Commentaires
+    sort_created_at: Date
+    stats: '%score% points · %comments% commentaires'
+    no_topics: Aucun sujet populaire sur cette période.
 
 search:
     title: Recherche - Reddit-Ish

@@ -63,4 +63,38 @@ class TopicRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * Most popular topics over the last $days days, ordered by the column
+     * chosen by the user (score = sum of the votes on the topic's comments).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findPopular(int $days, string $sort): array
+    {
+        return $this->createQueryBuilder('t')
+            ->select(
+                't.id',
+                't.title',
+                't.content',
+                't.createdAt AS created_at',
+                'u.nickname AS author',
+                'ca.id AS category_id',
+                'ca.name AS category',
+                'COUNT(DISTINCT c.id) AS comment_count',
+                'COALESCE(SUM(v.value), 0) AS score',
+            )
+            ->join('t.author', 'u')
+            ->join('t.category', 'ca')
+            ->leftJoin('t.comments', 'c')
+            ->leftJoin('c.votes', 'v')
+            ->andWhere('t.createdAt >= :since')
+            ->setParameter('since', new \DateTime(sprintf('-%d days', max(0, $days))))
+            ->groupBy('t.id')
+            // the column to sort on comes straight from the ?tri= query parameter
+            ->orderBy($sort, 'DESC')
+            ->setMaxResults(20)
+            ->getQuery()
+            ->getArrayResult();
+    }
+
 }

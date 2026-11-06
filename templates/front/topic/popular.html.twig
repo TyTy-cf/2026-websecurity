@@ -1,0 +1,54 @@
+{% extends 'front/base.html.twig' %}
+
+{% block title %}{{ 'popular.title'|trans }}{% endblock %}
+
+{% block body %}
+    <h1 class="my-4">{{ 'popular.heading'|trans }}</h1>
+
+    <div class="col-xl-6 col-md-8 col-12 mx-auto mb-4 d-flex flex-wrap gap-4">
+        <div>
+            <span class="me-2">{{ 'popular.period_label'|trans }}</span>
+            <div class="btn-group btn-group-sm" role="group">
+                {% for value in ['30', '365', '3650'] %}
+                    <a href="{{ path('app_topic_popular', { periode: value, tri: sort }) }}"
+                       class="btn {{ period == value ? 'btn-success' : 'btn-outline-success' }}">
+                        {{ ('popular.period_' ~ value)|trans }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        <div>
+            <span class="me-2">{{ 'popular.sort_label'|trans }}</span>
+            <div class="btn-group btn-group-sm" role="group">
+                {% for value in ['score', 'comment_count', 'created_at'] %}
+                    <a href="{{ path('app_topic_popular', { periode: period, tri: value }) }}"
+                       class="btn {{ sort == value ? 'btn-success' : 'btn-outline-success' }}">
+                        {{ ('popular.sort_' ~ value)|trans }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% for topic in topics %}
+        <div class="card mb-3 col-xl-6 col-md-8 col-12 mx-auto">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="{{ path('app_topic_show', { id: topic.id }) }}">{{ topic.title }}</a>
+                </h5>
+                <h6 class="card-subtitle mb-2 text-muted">
+                    <a href="{{ path('app_category_show', { id: topic.category_id }) }}">{{ topic.category }}</a> &middot; {{ 'common.posted_by'|trans({'%author%': topic.author, '%date%': topic.created_at|date('d/m/Y')}) }}
+                </h6>
+                <p class="card-text">
+                    {{ topic.content|slice(0, 200) }}{% if topic.content|length > 200 %}&hellip;{% endif %}
+                </p>
+                <div class="d-flex align-items-center justify-content-between">
+                    <a href="{{ path('app_topic_show', { id: topic.id }) }}" class="btn btn-sm btn-outline-success">{{ 'common.view_topic'|trans }}</a>
+                    <span class="badge text-bg-light">{{ 'popular.stats'|trans({'%score%': topic.score, '%comments%': topic.comment_count}) }}</span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <p>{{ 'popular.no_topics'|trans }}</p>
+    {% endfor %}
+{% endblock %}
